@@ -1,19 +1,17 @@
 //! The credential this adapter signs in to Jellyfin with, as lemonfiber writes it into the
 //! adapter's configuration directory.
 
-use std::io::Read as _;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
+use lemonfiber_contract::adapter::UPSTREAM_FILE;
 
-/// The file in the adapter's configuration directory lemonfiber writes the upstream's
-/// credential to.
-pub const UPSTREAM_FILE: &str = "upstream.json";
+const USERNAME: &str = "username";
 
-const LARGEST: u64 = 4096;
+const PASSWORD: &str = "password";
 
 /// An account on Jellyfin and its password.
-#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Credential {
     /// The account's name.
     pub username: String,
@@ -46,38 +44,37 @@ impl Holding for Credential {
     }
 }
 
-/// The credential file in one configuration directory.
+/// The credential lemonfiber wrote into one configuration directory.
 #[derive(Debug, Clone)]
 pub struct Upstream(PathBuf);
 
 impl Upstream {
-    /// The credential file lemonfiber writes into `configuration`.
+    /// The credential lemonfiber writes into `configuration`.
     #[must_use]
     pub fn in_directory(configuration: &Path) -> Self {
-        Self(configuration.join(UPSTREAM_FILE))
+        Self(configuration.to_path_buf())
     }
 }
 
 impl Holding for Upstream {
     fn credential(&self) -> Result<Credential, String> {
-        let file = std::fs::File::open(&self.0)
-            .map_err(|why| format!("{UPSTREAM_FILE} could not be opened: {why}"))?;
-        let mut text = String::new();
-        file.take(LARGEST + 1)
-            .read_to_string(&mut text)
-            .map_err(|why| format!("{UPSTREAM_FILE} could not be read: {why}"))?;
-        if text.len() as u64 > LARGEST {
-            return Err(format!("{UPSTREAM_FILE} is larger than {LARGEST} bytes"));
-        }
-        let held: Credential = serde_json::from_str(&text).map_err(|_| {
-            format!("{UPSTREAM_FILE} is not an object naming a username and a password")
+        let mut parts = lemonfiber_adapter_kit::upstream_in(&self.0).map_err(|why| {
+            if why.kind() == ErrorKind::InvalidData {
+                format!("{UPSTREAM_FILE} is not an object of named strings")
+            } else {
+                format!("{UPSTREAM_FILE} could not be read: {why}")
+            }
         })?;
-        if held.username.is_empty() || held.password.is_empty() {
-            return Err(format!(
-                "{UPSTREAM_FILE} names an empty username or password"
-            ));
-        }
-        Ok(held)
+        let mut part = |name: &str| {
+            parts
+                .remove(name)
+                .filter(|value| !value.is_empty())
+                .ok_or_else(|| format!("{UPSTREAM_FILE} names no {name}"))
+        };
+        Ok(Credential {
+            username: part(USERNAME)?,
+            password: part(PASSWORD)?,
+        })
     }
 }
 
