@@ -42,7 +42,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: The tag is one the train cuts, on main, at the version the crate and the manifest declare
+      - name: The tag is one the train cuts, on main, at the version the crate declares
         id: what
         env:
           TAG: ${{ github.ref_name }}
@@ -64,14 +64,18 @@ jobs:
           import os, sys, tomllib
           tag, registry = sys.argv[1], sys.argv[2]
           crate = tomllib.load(open("Cargo.toml", "rb"))["package"]
-          manifest = tomllib.load(open("plugin.toml", "rb"))
-          for named, version in (("the crate", crate["version"]), ("the manifest", manifest["plugin"]["version"])):
-              if f"v{version}" != tag:
-                  sys.exit(f"::error::{named} declares {version}, so it is not tagged {tag}")
+          if f"v{crate['version']}" != tag:
+              sys.exit(f"::error::the crate declares {crate['version']}, so it is not tagged {tag}")
           image = f"{registry}/{crate['name']}"
+          manifest = tomllib.load(open("plugin.toml", "rb"))
           adapters = [one for one in manifest.get("service", []) if one.get("speaks")]
-          if [one["image"] for one in adapters] != [image]:
-              sys.exit(f"::error::the manifest's adapter service does not name {image}")
+          if adapters:
+              if manifest["plugin"]["version"] != crate["version"]:
+                  sys.exit(f"::error::the manifest declares {manifest['plugin']['version']}, so it is not tagged {tag}")
+              if [one["image"] for one in adapters] != [image]:
+                  sys.exit(f"::error::the manifest's adapter service does not name {image}")
+          else:
+              print(f"::notice::plugin.toml declares no adapter service yet, so nothing will pin {image}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write(f"image={image}\ntag={tag}\n")
           print(f"publishing {image}:{tag}")
@@ -248,6 +252,10 @@ jobs:
               -f "ref=refs/heads/${PIN_BRANCH}" -f "sha=${main}" >/dev/null
           fi
           gh api "repos/${REPOSITORY}/contents/plugin.toml?ref=${PIN_BRANCH}" > held.json
+          if ! python3 -c 'import base64, json, sys; text = base64.b64decode(json.load(open("held.json"))["content"]).decode(); sys.exit(0 if "\nspeaks" in text else 1)'; then
+            echo "::notice::plugin.toml declares no adapter service, so there is nothing to pin."
+            exit 0
+          fi
           python3 - "$DIGEST" "$TAG" <<'PY'
           import base64, json, re, sys
           digest, tag = sys.argv[1], sys.argv[2].removeprefix("v")
