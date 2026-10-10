@@ -44,10 +44,10 @@ jobs:
       - name: Run as the image's own user, it cannot read the key and does not start
         run: |
           set -uo pipefail
+          status=0
           said="$(docker run --name adapter-unkeyed --read-only --cap-drop ALL \
             --security-opt no-new-privileges -v "$configuration:/config:ro" \
-            jellyfin-adapter:check 2>&1)"
-          status=$?
+            jellyfin-adapter:check 2>&1)" || status=$?
           docker rm -f adapter-unkeyed >/dev/null
           echo "$said"
           if [ "$status" -eq 0 ] || [[ "$said" != *"the plugin's key could not be read"* ]]; then
