@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use super::item::ItemResource;
 use super::Jellyfin;
 use crate::endpoint::form_encoded;
-use crate::shape::{a_device, an_id};
+use crate::shape::{a_device, a_picture, an_id, Id};
 use lemonfiber_ports::http::{Method, Request};
 use lemonfiber_ports::service::{
     EpisodeDetail, Failure, HowFar, Image, Item, ItemDetail, ItemProgress, Picture, Playback,
@@ -91,6 +91,9 @@ impl Screening for Jellyfin {
     }
 
     async fn part_way(&self, member: &str, most: u32) -> Result<Vec<ItemProgress>, Failure> {
+        if !an_id(member) {
+            return Err(self.misshapen("an account"));
+        }
         let asked = form_encoded(&[
             ("userId", member),
             ("Limit", &most.to_string()),
@@ -123,6 +126,9 @@ impl Screening for Jellyfin {
     }
 
     async fn sign_out(&self, device: &str) -> Result<(), Failure> {
+        if !a_device(device) {
+            return Err(self.misshapen("a device"));
+        }
         let asked = form_encoded(&[("id", device)]);
         let response = self
             .as_admin(Method::Delete, &format!("/Devices?{asked}"), None)
@@ -192,7 +198,7 @@ async fn opened(
     Ok(Some(opened.token))
 }
 
-fn pictured_at(id: &str, which: Picture) -> String {
+fn pictured_at(id: Id<'_>, which: Picture) -> String {
     let named = match which {
         Picture::Poster => "Primary",
         Picture::Backdrop => "Backdrop",
@@ -206,7 +212,11 @@ async fn pictured(
     id: &str,
     which: Picture,
 ) -> Result<Option<Image>, Failure> {
-    if !an_id(id) || titled(jellyfin, member, id).await?.is_none() {
+    let member = account(jellyfin, member)?;
+    let Some(id) = Id::of(id) else {
+        return Ok(None);
+    };
+    if titled_as(jellyfin, member, id).await?.is_none() {
         return Ok(None);
     }
     let request = jellyfin.request(Method::Get, &pictured_at(id, which), None);
@@ -219,10 +229,13 @@ async fn pictured(
             .endpoint
             .refused("the media server would not answer the picture"));
     }
-    let media_type = fetched
+    let Some(media_type) = fetched
         .header("content-type")
-        .unwrap_or_default()
-        .to_owned();
+        .filter(|kind| a_picture(kind))
+    else {
+        return Ok(None);
+    };
+    let media_type = media_type.to_owned();
     Ok(fetched.bytes.map(|bytes| Image { media_type, bytes }))
 }
 
@@ -242,9 +255,24 @@ async fn titled(
     member: Option<&str>,
     id: &str,
 ) -> Result<Option<ItemDetail>, Failure> {
-    if !an_id(id) {
-        return Ok(None);
+    let member = account(jellyfin, member)?;
+    match Id::of(id) {
+        Some(id) => titled_as(jellyfin, member, id).await,
+        None => Ok(None),
     }
+}
+
+fn account<'a>(jellyfin: &Jellyfin, member: Option<&'a str>) -> Result<Option<Id<'a>>, Failure> {
+    member
+        .map(|member| Id::of(member).ok_or_else(|| jellyfin.misshapen("an account")))
+        .transpose()
+}
+
+async fn titled_as(
+    jellyfin: &Jellyfin,
+    member: Option<Id<'_>>,
+    id: Id<'_>,
+) -> Result<Option<ItemDetail>, Failure> {
     let response = jellyfin
         .as_admin(Method::Get, &format!("/Items/{id}{}", whose(member)), None)
         .await?;
@@ -268,6 +296,9 @@ async fn progress(
     id: &str,
     how_far: HowFar,
 ) -> Result<(), Failure> {
+    if !an_id(member) {
+        return Err(jellyfin.misshapen("an account"));
+    }
     if !an_id(id) {
         return Err(jellyfin.misshapen("an item"));
     }
@@ -293,8 +324,8 @@ async fn progress(
 
 async fn seasons(
     jellyfin: &Jellyfin,
-    member: Option<&str>,
-    id: &str,
+    member: Option<Id<'_>>,
+    id: Id<'_>,
 ) -> Result<Vec<SeasonDetail>, Failure> {
     let response = jellyfin
         .as_admin(
@@ -307,7 +338,7 @@ async fn seasons(
         .endpoint
         .decode(&response, "the series' seasons could not be read")?;
     let asked = match member {
-        Some(member) => form_encoded(&[("userId", member), ("Fields", "Overview")]),
+        Some(member) => form_encoded(&[("userId", &member.to_string()), ("Fields", "Overview")]),
         None => form_encoded(&[("Fields", "Overview")]),
     };
     let response = jellyfin
@@ -319,9 +350,9 @@ async fn seasons(
     Ok(grouped(listed.items, episodes.items))
 }
 
-fn whose(member: Option<&str>) -> String {
+fn whose(member: Option<Id<'_>>) -> String {
     member.map_or_else(String::new, |member| {
-        format!("?{}", form_encoded(&[("userId", member)]))
+        format!("?{}", form_encoded(&[("userId", &member.to_string())]))
     })
 }
 

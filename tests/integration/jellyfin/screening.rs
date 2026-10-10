@@ -282,13 +282,13 @@ async fn a_device_is_signed_out_by_name_and_a_refusal_is_said() {
         Answer::reply(500, ""),
     ]);
     let client = reader(&fake);
-    assert!(client.sign_out("phone one").await.is_ok());
-    assert!(client.sign_out("phone one").await.is_err());
+    assert!(client.sign_out("phone-0001").await.is_ok());
+    assert!(client.sign_out("phone-0001").await.is_err());
     assert_eq!(
         asked(&fake).first(),
         Some(&(
             Method::Delete,
-            "http://127.0.0.1:8096/Devices?id=phone+one".to_owned()
+            "http://127.0.0.1:8096/Devices?id=phone-0001".to_owned()
         ))
     );
 }

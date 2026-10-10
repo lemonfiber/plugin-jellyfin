@@ -1,12 +1,14 @@
 use lemonfiber_fixtures::http::{Answer, Fake};
 use lemonfiber_ports::http::Method;
 use lemonfiber_ports::service::{
-    Allowed, Failure, Household as _, HowFar, Screening as _, Signed, Upkeep as _,
+    Allowed, Failure, Household as _, HowFar, Picture, Screening as _, Signed, Upkeep as _,
 };
 
 use super::{reader, SIGNED_IN};
 
 const WALKING: &str = "../System/Restart";
+
+const ITEM: &str = "f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1";
 
 fn refused_unasked<T: std::fmt::Debug>(fake: &Fake, outcome: &Result<T, Failure>) -> bool {
     matches!(outcome, Err(Failure::Refused { .. })) && fake.requests().is_empty()
@@ -39,6 +41,24 @@ async fn an_account_id_shaped_like_a_path_is_refused_before_anything_is_asked() 
     assert!(refused_unasked(
         &fake,
         &client.signed_in(WALKING, "a-phone-0123").await
+    ));
+    assert!(refused_unasked(&fake, &client.part_way(WALKING, 5).await));
+    assert!(refused_unasked(
+        &fake,
+        &client.title(Some(WALKING), ITEM).await
+    ));
+    assert!(refused_unasked(
+        &fake,
+        &client
+            .progressed(
+                WALKING,
+                ITEM,
+                &HowFar {
+                    position: 1,
+                    ended: false
+                }
+            )
+            .await
     ));
 }
 
@@ -75,6 +95,7 @@ async fn a_device_that_could_close_its_quotes_is_refused_before_anything_is_aske
             .signed_in("a7f3a7f3a7f3a7f3a7f3a7f3a7f3a7f3", closing)
             .await
     ));
+    assert!(refused_unasked(&fake, &client.sign_out(closing).await));
 }
 
 #[tokio::test]
@@ -104,4 +125,18 @@ async fn a_moment_is_asked_for_as_a_query_value_and_adds_no_parameter() {
             "/System/ActivityLog/Entries?minDate=2026-10-01T00%3A00%3A00Z%26limit%3D1&limit=200"
         )
     }));
+}
+
+#[tokio::test]
+async fn a_picture_of_a_misshapen_item_is_none_and_for_a_misshapen_account_is_refused() {
+    let fake = Fake::silent();
+    let client = reader(&fake);
+    assert_eq!(
+        client.picture(None, WALKING, Picture::Poster).await.ok(),
+        Some(None)
+    );
+    assert!(refused_unasked(
+        &fake,
+        &client.picture(Some(WALKING), ITEM, Picture::Poster).await
+    ));
 }

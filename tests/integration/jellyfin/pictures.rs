@@ -104,3 +104,19 @@ async fn a_picture_nothing_answers_is_unavailable() {
         "{unanswered:?}"
     );
 }
+
+#[tokio::test]
+async fn an_answer_that_is_not_an_image_or_is_svg_is_no_picture() {
+    for served in ["text/html", "image/svg+xml", "application/json"] {
+        let fake = Fake::in_turn(vec![
+            Answer::reply(200, SIGNED_IN),
+            Answer::reply(200, THE_FILM),
+            Answer::served(200, served, "<svg onload=alert(1)>"),
+        ]);
+        let image = reader(&fake).picture(None, FILM, Picture::Poster).await;
+        assert!(
+            matches!(image, Ok(None)),
+            "{served} was answered as {image:?}"
+        );
+    }
+}

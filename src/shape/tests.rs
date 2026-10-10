@@ -1,4 +1,4 @@
-use super::{a_device, a_key, an_id};
+use super::{a_device, a_key, a_picture, an_id};
 
 #[test]
 fn an_id_is_thirty_two_hex_digits_with_or_without_its_dashes() {
@@ -31,5 +31,27 @@ fn a_key_is_letters_and_digits_and_never_a_path() {
     assert!(a_key("0f3a9c2b"));
     for refused in ["", "a/b", "a?b=c", "../keys", &"a".repeat(129)] {
         assert!(!a_key(refused), "{refused:?} was taken for a key");
+    }
+}
+
+#[test]
+fn a_picture_is_an_image_type_and_never_svg() {
+    for shown in [
+        "image/jpeg",
+        "image/png",
+        "IMAGE/WEBP",
+        "image/jpeg; charset=binary",
+    ] {
+        assert!(a_picture(shown), "{shown:?} was refused");
+    }
+    for refused in [
+        "",
+        "image/",
+        "image/svg+xml",
+        "text/html",
+        "application/json",
+        "imagejpeg",
+    ] {
+        assert!(!a_picture(refused), "{refused:?} was taken for a picture");
     }
 }
