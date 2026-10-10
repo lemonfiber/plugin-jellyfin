@@ -1,0 +1,329 @@
+#!/usr/bin/env python3
+"""Ask the lemonfiber release `targets.toml` names what this plugin comes to.
+
+**This is CI harness, not plugin content.** Nothing under `.github/` is
+installed, and lemonfiber never runs any of it (`F3-R6`).
+
+Every verdict here is lemonfiber's own. `lemonfiber plugin claims` holds the
+manifest to the schema, the capability vocabulary and the extension points its
+build publishes, and runs every probe, proof and contributed check against the
+recording it names (`F10-R3`, `F10-R4`). `lemonfiber plugin provenance` asks each
+image's registry who vouched for it (`F3-R25`). This file fetches that release,
+asks it, and writes down what it said; it decides nothing a manifest means.
+
+    python3 .github/reader/reader.py reader     the release is out, verified, and reads this plugin
+    python3 .github/reader/reader.py manifest   nothing about the manifest is refused
+    python3 .github/reader/reader.py proofs     every assertion holds on its recording, or fails as declared; writes proofs.json
+    python3 .github/reader/reader.py image      every pinned digest resolves; what vouches for it
+
+One verdict is reported and not failed on: an assertion failing as declared,
+on a recording its manifest says it fails on, on the constraint it names and no
+other (`F10-R13`). It is written to `proofs.json` apart from passed and failed,
+with the recording, the constraint, what the answer held there and the reason,
+and it is never counted as passed. Whether a failure is the one declared is the
+release's to decide, as every other verdict is.
+
+One refusal is reported and not failed on: a capability in `[requires]` that the
+release does not offer a plugin. That is the release saying the plugin would not
+be installed on it, which `targets.toml` does not claim; `F3-R21` is why the
+refusal names the capability rather than a version, and `reader` prints it.
+
+The release is fetched once into `.lemonfiber/` beside the manifest and checked
+against the digest published with it. Exit 0 = the answer is the one asked for,
+1 = it is not, or the release could not be asked.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import io
+import json
+import pathlib
+import platform
+import stat
+import subprocess
+import sys
+import tarfile
+import tomllib
+import urllib.request
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+MANIFEST = ROOT / "plugin.toml"
+TARGETS = ROOT / "targets.toml"
+REPORT = ROOT / "proofs.json"
+CACHE = ROOT / ".lemonfiber"
+RELEASES = "https://github.com/lemonfiber/lemonfiber/releases/download"
+SCHEMA = "plugin-manifest.schema.json"
+DIRECTIVE = "#:schema "
+FETCH_TIMEOUT_S = 120
+
+# The one refusal that is about the release rather than the manifest.
+UNOFFERED = "is not something this build offers a plugin"
+
+# The one verdict besides passed that does not fail a run, and what each
+# declaration behind it has to say for the report to name it (`F10-R13`).
+AS_DECLARED = "failing-as-declared"
+DECLARED = ("fixture", "constraint", "held", "reason")
+
+# What this runs on, and the name the release gives the build for it.
+BUILDS = {
+    ("Linux", "x86_64"): "x86_64-unknown-linux-gnu",
+    ("Darwin", "arm64"): "aarch64-apple-darwin",
+    ("Darwin", "x86_64"): "x86_64-apple-darwin",
+}
+
+
+class Unasked(RuntimeError):
+    """The release could not be fetched or asked, so nothing was decided."""
+
+
+def targeted() -> str:
+    """The release `targets.toml` names (`REPO-R56`)."""
+    version = tomllib.loads(TARGETS.read_text(encoding="utf-8")).get("lemonfiber")
+    if not isinstance(version, str) or not version:
+        raise Unasked(f"{TARGETS.name} names no lemonfiber release")
+    return version
+
+
+def build() -> str:
+    named = BUILDS.get((platform.system(), platform.machine()))
+    if named is None:
+        raise Unasked(f"no lemonfiber build is published for {platform.system()} {platform.machine()}")
+    return named
+
+
+def fetched(url: str) -> bytes:
+    with urllib.request.urlopen(url, timeout=FETCH_TIMEOUT_S) as answer:
+        return answer.read()
+
+
+def binary() -> pathlib.Path:
+    """The release's `lemonfiber`, fetched and verified the first time it is asked for."""
+    version, named = targeted(), build()
+    held = CACHE / version / named / "lemonfiber"
+    if held.is_file():
+        return held
+    archive = f"lemonfiber-{named}.tar.xz"
+    base = f"{RELEASES}/v{version}/{archive}"
+    body = fetched(base)
+    published = fetched(f"{base}.sha256").decode("utf-8").split()[0]
+    if hashlib.sha256(body).hexdigest() != published:
+        raise Unasked(f"{archive} from v{version} is not the file its published digest names")
+    with tarfile.open(fileobj=io.BytesIO(body), mode="r:xz") as unpacked:
+        member = unpacked.extractfile(f"lemonfiber-{named}/lemonfiber")
+        if member is None:
+            raise Unasked(f"{archive} from v{version} holds no lemonfiber")
+        held.parent.mkdir(parents=True, exist_ok=True)
+        held.write_bytes(member.read())
+    held.chmod(held.stat().st_mode | stat.S_IXUSR)
+    return held
+
+
+def plugin(*asked: str) -> subprocess.CompletedProcess:
+    """One question to `lemonfiber plugin`, about this directory."""
+    return subprocess.run(
+        [str(binary()), "plugin", *asked, str(ROOT)],
+        capture_output=True, text=True, check=False,
+    )
+
+
+def claimed() -> dict:
+    """What `lemonfiber plugin claims --json` says, or why it said nothing."""
+    answer = plugin("claims", "--json")
+    try:
+        return json.loads(answer.stdout)
+    except ValueError:
+        raise Unasked(f"lemonfiber read nothing here: {answer.stderr.strip()}") from None
+
+
+def reader() -> int:
+    """The release is out, it is the one downloaded, and it reads this plugin."""
+    version = targeted()
+    said = subprocess.run([str(binary()), "--version"], capture_output=True, text=True, check=False)
+    if said.stdout.strip() != f"lemonfiber {version}":
+        print(f"::error::targets.toml names {version}, and the binary says {said.stdout.strip()!r}")
+        return 1
+    read = claimed()
+    print(plugin("claims").stdout)
+    for refusal in read["refusals"]:
+        if UNOFFERED in refusal["message"]:
+            print(f"::notice::{version} would not install this: {refusal['message']}")
+    return 0
+
+
+def schema_for(version: str) -> str:
+    """The manifest schema published with a release (`F10-R1`)."""
+    return f"{RELEASES}/v{version}/{SCHEMA}"
+
+
+def named_schema() -> str | None:
+    """The schema the manifest's first line points an editor at, if it names one."""
+    first = MANIFEST.read_text(encoding="utf-8").split("\n", 1)[0].strip()
+    return first.removeprefix(DIRECTIVE).strip() if first.startswith(DIRECTIVE) else None
+
+
+def schema_disagreement(version: str) -> str | None:
+    """Why the schema line and `targets.toml` disagree, where they do (`F10-R17`).
+
+    A manifest naming no schema is told which line would let an editor check it,
+    and is not refused for it: a plugin may be written without one.
+    """
+    wanted, named = schema_for(version), named_schema()
+    if named is None:
+        print(f"::notice file=plugin.toml::an editor checks this manifest as it is typed once its first line is `{DIRECTIVE}{wanted}`")
+        return None
+    if named == wanted:
+        return None
+    return f"the first line names the schema {named}, and targets.toml names {version}, whose schema is {wanted}"
+
+
+def manifest() -> int:
+    """Every refusal the release makes of the manifest, bar what it does not offer."""
+    read = claimed()
+    held = [one for one in read["refusals"] if UNOFFERED not in one["message"]]
+    for refusal in held:
+        print(f"::error file=plugin.toml::{refusal['location']}: {refusal['message']}")
+    disagreement = schema_disagreement(targeted())
+    if disagreement is not None:
+        print(f"::error file=plugin.toml,line=1::{disagreement}")
+        held.append({"location": "1", "message": disagreement})
+    print(
+        f"{len(held)} refusal(s) of the manifest, held to capability vocabulary generation "
+        f"{read['vocabulary_version']} and extension points generation {read['extension_points_version']}."
+    )
+    return 1 if held else 0
+
+
+def declarations(verdict: dict) -> list[dict]:
+    """What a verdict failing as declared says failed, where, on what, and why.
+
+    Refused rather than written down without it: a report naming a failure as
+    declared and not the declaration is one nobody can check against the manifest.
+    """
+    found = verdict.get("declared")
+    if not isinstance(found, list) or not found:
+        raise Unasked(f"the release said {AS_DECLARED} and named no declaration")
+    for one in found:
+        lacking = [field for field in DECLARED if not isinstance(one, dict) or one.get(field) in (None, "")]
+        if lacking:
+            raise Unasked(f"the release said {AS_DECLARED} and its declaration names no {', '.join(lacking)}")
+    return found
+
+
+def as_declared(declared: dict) -> str:
+    """One declaration an assertion failed as, as one line."""
+    place = f" at {declared['place']}" if declared.get("place") else ""
+    return (
+        f"fails as declared on {declared['fixture']}: {declared['constraint']}{place} "
+        f"held {declared['held']}. {declared['reason']}"
+    )
+
+
+def said(verdict: dict) -> str:
+    """A verdict's reasons, as one line."""
+    if verdict["outcome"] == AS_DECLARED:
+        return "; ".join(as_declared(one) for one in declarations(verdict))
+    reasons = [value for key, value in verdict.items() if key != "outcome"]
+    flat = [str(each) for value in reasons for each in (value if isinstance(value, list) else [value])]
+    return "; ".join(flat)
+
+
+def written(one: dict) -> dict:
+    """One assertion as the report keeps it; one failing as declared keeps its declarations."""
+    verdict = one["verdict"]
+    entry = {"id": one["id"], "kind": one["kind"], "outcome": verdict["outcome"], "detail": said(verdict)}
+    if verdict["outcome"] == AS_DECLARED:
+        entry["declared"] = declarations(verdict)
+    return entry
+
+
+def verdicts(read: dict) -> list[dict]:
+    """Every assertion and what the release said of it, in the order the report keeps."""
+    found = [{"id": one["id"], "kind": "proof", "verdict": one["verdict"]} for one in read["proofs"]]
+    for capability in read["capabilities"]:
+        found.extend(
+            {"id": f"{capability['name']}/{probe['probe']}", "kind": "probe", "verdict": probe["verdict"]}
+            for probe in capability["probes"]
+        )
+    found.extend({"id": one["id"], "kind": "check", "verdict": one["verdict"]} for one in read["checks"])
+    return found
+
+
+def proofs() -> int:
+    """Every probe, proof and check on its recording, written down as `proofs.json`.
+
+    The report is the record the release train reads (`OPS-R67`): which release
+    decided it, and what each assertion came to. Failing as declared is named and
+    written down apart, and fails nothing (`F10-R13`). Anything else that did not
+    pass fails, and a report naming nothing fails too (`F3-R5`).
+    """
+    read = claimed()
+    found = verdicts(read)
+    report = {
+        "lemonfiber": targeted(),
+        "against": read["against"],
+        "proofs": [written(one) for one in found],
+    }
+    REPORT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    for entry in report["proofs"]:
+        mark = {"passed": "  ok  ", AS_DECLARED: "  decl"}.get(entry["outcome"], "  " + entry["outcome"].upper()[:4])
+        print(f"{mark} {entry['kind']:6} {entry['id']:<36} {entry['detail']}")
+    for entry in report["proofs"]:
+        for declared in entry.get("declared", []):
+            print(f"::notice::{entry['kind']} {entry['id']} {as_declared(declared)}")
+    passed = [entry for entry in report["proofs"] if entry["outcome"] == "passed"]
+    excused = [entry for entry in report["proofs"] if entry["outcome"] == AS_DECLARED]
+    failing = len(found) - len(passed) - len(excused)
+    print(
+        f"\n{len(passed)} passed, {len(excused)} failing as declared, {failing} not, "
+        f"against the {read['against']}."
+    )
+    return 1 if failing or not found else 0
+
+
+def resolves(reference: str) -> str:
+    """The digest a reference names in its registry now, or nothing."""
+    asked = subprocess.run(
+        ["docker", "buildx", "imagetools", "inspect", reference, "--format", "{{.Manifest.Digest}}"],
+        capture_output=True, text=True, check=False,
+    )
+    return asked.stdout.strip() if asked.returncode == 0 else ""
+
+
+def image() -> int:
+    """Every pinned digest resolves and its tag still names it (`F3-R8`), then who vouches (`F3-R25`)."""
+    services = tomllib.loads(MANIFEST.read_text(encoding="utf-8")).get("service", [])
+    faults = 0
+    for service in services:
+        pinned = f"{service['image']}@{service['digest']}"
+        if resolves(pinned) != service["digest"]:
+            print(f"::error::{pinned} is not in its registry")
+            faults += 1
+            continue
+        tagged = resolves(f"{service['image']}:{service['tag']}")
+        if tagged and tagged != service["digest"]:
+            print(f"::error::{service['image']}:{service['tag']} names {tagged}, not the pinned digest")
+            faults += 1
+        else:
+            print(f"  ok   {pinned}, which {service['tag']} names" if tagged else f"  ok   {pinned}")
+    vouched = plugin("provenance")
+    print(vouched.stdout + vouched.stderr)
+    return 1 if faults or vouched.returncode != 0 else 0
+
+
+ASKED = {"reader": reader, "manifest": manifest, "proofs": proofs, "image": image}
+
+
+def main() -> int:
+    if len(sys.argv) != 2 or sys.argv[1] not in ASKED:
+        print(f"usage: reader.py {{{','.join(ASKED)}}}", file=sys.stderr)
+        return 2
+    try:
+        return ASKED[sys.argv[1]]()
+    except (Unasked, OSError) as why:
+        print(f"::error::{why}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
