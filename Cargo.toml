@@ -30,6 +30,7 @@ tokio = { version = "1", features = ["fs", "macros", "net", "rt-multi-thread", "
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
 tower = { version = "0.5", default-features = false, features = ["util"] }
 lemonfiber-fixtures = { git = "https://github.com/lemonfiber/lemonfiber", rev = "fe8607ed4f2ea1b86953403e009cb1bc91e21854" }
+lemonfiber-plugin = { git = "https://github.com/lemonfiber/lemonfiber", rev = "fe8607ed4f2ea1b86953403e009cb1bc91e21854" }
 toml = "1.1"
 
 [lints.rust]

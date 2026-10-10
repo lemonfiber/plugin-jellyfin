@@ -488,6 +488,7 @@ dependencies = [
  "lemonfiber-contract",
  "lemonfiber-error",
  "lemonfiber-fixtures",
+ "lemonfiber-plugin",
  "lemonfiber-ports",
  "reqwest",
  "ring",
@@ -519,6 +520,14 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+]
+
+[[package]]
+name = "lemonfiber-bundled"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=fe8607ed4f2ea1b86953403e009cb1bc91e21854#fe8607ed4f2ea1b86953403e009cb1bc91e21854"
+dependencies = [
+ "lemonfiber-manifest",
 ]
 
 [[package]]
@@ -565,6 +574,22 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
+]
+
+[[package]]
+name = "lemonfiber-plugin"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=fe8607ed4f2ea1b86953403e009cb1bc91e21854#fe8607ed4f2ea1b86953403e009cb1bc91e21854"
+dependencies = [
+ "lemonfiber-bundled",
+ "lemonfiber-contract",
+ "lemonfiber-manifest",
+ "schemars",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "toml",
+ "url",
 ]
 
 [[package]]
