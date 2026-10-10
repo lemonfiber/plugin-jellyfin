@@ -9,7 +9,8 @@
 #   on somebody's machine, made with the proofs re-recorded against the new
 #   image. A bot that moved it would be changing what runs, unreviewed.
 #
-# So this covers what is: the adapter's crates, and the actions and reusable
+# So this covers what is: the adapter's crates, the images its Dockerfile builds
+# from, and the actions and reusable
 # workflows CI runs. The core's crates are pinned to the commit the release train
 # moves, never by this updater.
 version: 2
@@ -47,3 +48,14 @@ updates:
         patterns: ["*"]
         exclude-patterns: ["lemonfiber/spec*"]
         update-types: ["minor", "patch"]
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels: ["dependencies"]
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      images:
+        patterns: ["*"]

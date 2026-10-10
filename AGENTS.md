@@ -12,7 +12,9 @@
 Jellyfin as a first-party lemonfiber plugin (ADR-0041, ADR-0042): `plugin.toml`,
 and the adapter that speaks the `media.serve@1` and `identity.source@1` contracts
 in front of Jellyfin. The adapter is the Rust crate at the root, built on
-`lemonfiber-adapter-kit` from the core at the commit `Cargo.toml` pins.
+`lemonfiber-adapter-kit` from the core at the commit `Cargo.toml` pins, into the
+image the `Dockerfile` builds. `release.yml` publishes that image from the
+train's tag and proposes its digest to `plugin.toml`.
 
 `.github/reader/` is a byte-identical copy of plugin-template's harness. Change it
 there, then copy it here.
