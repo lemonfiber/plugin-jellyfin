@@ -1,4 +1,4 @@
-# Task runner for lemonfiber/plugin-template. `just` with no argument lists these.
+# Task runner for lemonfiber/plugin-jellyfin. `just` with no argument lists these.
 default:
     @just --list
 
@@ -23,10 +23,9 @@ hooks:
 #   commitlint, dco, attribution, spec-check   `.githooks/commit-msg` refuses all
 #                                              four of these before the push, and
 #                                              `hooks` above is what turns it on
-#   harness                                    this repository *is* the harness;
-#                                              the copies in plugin-komga and
-#                                              plugin-uptime-kuma are compared
-#                                              against it, which needs both trees
+#   harness                                    `.github/reader/` is compared with
+#                                              plugin-template's, which needs both
+#                                              trees
 #   shared-files, pins, workflow-pins          need a lemonfiber/spec checkout and
 #                                              the forge to compare against
 #   actionlint, markdown, invite               need tools this repository does not
@@ -37,7 +36,7 @@ hooks:
 #                                              a manifest
 #
 # Every gate CI runs over this repository's contents — not the whole of CI.
-ci: hooks reader-tests reader manifest proofs image typos links
+ci: hooks fmt clippy test coverage deny reader-tests reader manifest proofs image typos links
 
 # What the reader writes down and fails on, given what a release said. No
 # release is fetched: the verdicts are the release's own, and these hold the
@@ -84,3 +83,23 @@ typos:
 # Link check.
 links:
     lychee --no-progress .
+
+# The adapter's format.
+fmt:
+    cargo fmt --check
+
+# The adapter's lints, every warning an error.
+clippy:
+    cargo clippy --all-targets --locked -- -D warnings
+
+# The adapter's tests.
+test:
+    cargo test --locked
+
+# Every line of the adapter the tests can reach, reached.
+coverage:
+    cargo llvm-cov --locked --ignore-filename-regex "$(cat .config/coverage-skipped)" --fail-under-lines 100
+
+# The adapter's dependencies, held to `deny.toml`.
+deny:
+    cargo deny --log-level warn check

@@ -1,4 +1,4 @@
-# AGENTS.md — plugin-template
+# AGENTS.md — plugin-jellyfin
 
 > **Start at the roadmap and board on [lemonfiber.app](https://lemonfiber.app),
 > rendered from the report of where every unreleased version stands. Then the
@@ -9,41 +9,25 @@
 
 ## What this repo is
 
-The plugin an author copies, and the **canonical home of the CI harness**.
-`plugin-komga`, `plugin-uptime-kuma`, `plugin-plex` and `lemonfiber-plugins` carry
-byte-identical copies of `.github/reader/`, and the ones with a `harness` job fail
-when their copy drifts from this one. Change the harness here, then copy it out;
-changing it there fails.
+Jellyfin as a first-party lemonfiber plugin (ADR-0041, ADR-0042): `plugin.toml`,
+and the adapter that speaks the `media.serve@1` and `identity.source@1` contracts
+in front of Jellyfin. The adapter is the Rust crate at the root, built on
+`lemonfiber-adapter-kit` from the core at the commit `Cargo.toml` pins.
 
-The plugin itself describes Kavita, and it describes something real on purpose:
-`F10-R7` asks for a template that validates and proves *unmodified*, and a
-template whose proofs are invented teaches an author to invent proofs.
+`.github/reader/` is a byte-identical copy of plugin-template's harness. Change it
+there, then copy it here.
 
 ## The rules you cannot break
 
-- **Nothing here executes.** A plugin is declarative data (`F3-R1`), and
-  contributed code is never run, under any opt-in (`F3-R6`). The Python under
-  `.github/reader/` is CI harness and is not part of what an operator installs:
-  it fetches the lemonfiber release `targets.toml` names and asks it.
-- **The plugin is `plugin.toml` and `fixtures/`.** Proofs, claims and
-  contributions live in the manifest, not beside it: an installer reads one file,
-  and something the installer never reads cannot be what `F3-R4` refuses an
-  install over.
-- **The image is named by digest** (`F3-R8`). Moving the pin means re-recording
-  every fixture against the new image in the same change.
-- **A proof asserts a body, never only a status.** Docker's port proxy accepts
-  before anything inside is listening. The one exception is a refusal: a `401`
-  is not something a port proxy can produce.
-- **A proof that could not be run is unproven** (`F3-R5`), never a pass, and
-  no declaration excuses it (`F10-R16`). Failing as declared is its own
-  verdict, written apart from passed and failed and never counted as passed
-  (`F10-R13`).
-- **No field beyond the contract's set.** A manifest carrying one is refused by
-  name rather than ignored (`ARCH-R84`).
-- **The format is lemonfiber's to describe, and nothing here describes it.**
-  `reader.py` carries no list of tables, fields, kinds, closed sets or capability
-  names, and decides no verdict: `F10-R2` forbids a second description of the
-  format, and every verdict CI reports is `lemonfiber plugin claims`'s own.
+- **No `unwrap`, `expect`, `panic` or indexing** outside tests. The lints in
+  `Cargo.toml` are the core's.
+- **Every value the core sends is held to its shape** (`src/shape.rs`) before it
+  is written into a path, a query or a quoted header.
+- **The adapter never writes its credential.** lemonfiber writes `upstream.json`
+  into the adapter's configuration directory; the adapter reads it for every
+  sign-in and never logs it.
+- **The core's crates move with the train.** The `rev` in `Cargo.toml` is the
+  core commit the release train pins, the same for every `lemonfiber-*` crate.
 
 ## Checks
 
@@ -51,13 +35,5 @@ template whose proofs are invented teaches an author to invent proofs.
 just ci
 ```
 
-Every gate CI runs over the contents of this repository, in CI's order. The jobs
-it leaves out are named in the `justfile` beside the recipe, with what covers
-each. `just` lists the recipes it is made of.
-
-`proofs.json` is generated and committed; CI fails when the committed one is not
-what the run would write. `reader.py proofs` writes it on every run.
-
-## Before you open a PR
-
-`just ci` turns this clone's git hooks on as its first step.
+Every gate CI runs over this repository, in CI's order. The jobs it leaves out
+are named in the `justfile` beside the recipe.
