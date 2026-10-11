@@ -231,7 +231,7 @@ def recorded(adapter: Adapter, pinned: str, password: str, keep) -> dict[tuple[s
     ask(media, "series_held", {"most": 10}, "Every series an empty library holds.")
     ask(media, "refresh", {"id": NOWHERE}, "An item Jellyfin does not hold asked to be read afresh, refused as the contract declares.")
     ask(media, "known_proxies", {}, "The addresses trusted to name the client on a fresh Jellyfin.")
-    ask(media, "trust_only", {"address": "10.80.96.18"}, "One address alone trusted to name the client, and read back.")
+    ask(media, "trust_only", {"address": "192.0.2.18"}, "One address alone trusted to name the client, and read back.")
     ask(media, "allowed_origins", {}, "The origins a browser may read Jellyfin from on a fresh one.")
     ask(media, "allow_only", {"origin": "https://watch.example"}, "One origin alone allowed, and read back.")
     ask(media, "filed_as", {"app": "lemonfiber-recorder"}, "The keys filed under a name nothing has a key under.")
@@ -251,12 +251,8 @@ def recorded(adapter: Adapter, pinned: str, password: str, keep) -> dict[tuple[s
     return said
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--check", action="store_true", help="record again and compare with conformance/")
-    checking = parser.parse_args().check
-
-    pinned, listens, speaks = manifest()
+def recorded_live(pinned: str, listens: int) -> dict[tuple[str, str], dict]:
+    """Every case, asked of the adapter in front of a throwaway Jellyfin, both removed after."""
     name = f"jellyfin-record-{uuid.uuid4().hex[:8]}"
     network = f"{name}-net"
     password = secrets.token_urlsafe(24)
@@ -270,30 +266,37 @@ def main() -> int:
         configuration.chmod(0o700)
         try:
             base = started(pinned, listens, network, configuration, name)
-            said = recorded(Adapter(base, key), pinned, password, lambda replacement: written(configuration, replacement))
+            return recorded(Adapter(base, key), pinned, password, lambda replacement: written(configuration, replacement))
         finally:
             for container in (f"{name}-adapter", f"{name}-jellyfin"):
                 docker("rm", "-fv", container, check=False)
             docker("rmi", f"{name}:adapter", check=False)
             docker("network", "rm", network, check=False)
 
-    faults = []
-    for spoken in speaks:
-        capability = spoken.split("@")[0]
-        for case in published_cases(spoken):
-            got = said.get((capability, case["case"]))
-            path = RECORDINGS / spoken / f"{case['case']}.json"
-            if got is None:
-                faults.append(f"{spoken}/{case['case']} was not asked")
-                continue
-            text = json.dumps(got, indent=2, ensure_ascii=False) + "\n"
-            if checking:
-                held = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
-                if held is None or normalised(held) != normalised(got):
-                    faults.append(f"{path.relative_to(ROOT)} is not what Jellyfin answers now")
-            else:
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(text, encoding="utf-8")
+
+def filed(said: dict[tuple[str, str], dict], spoken: str, case: str, checking: bool) -> str | None:
+    """One case written to conformance/, or compared with what is there; the fault, if any."""
+    got = said.get((spoken.split("@")[0], case))
+    path = RECORDINGS / spoken / f"{case}.json"
+    if got is None:
+        return f"{spoken}/{case} was not asked"
+    if checking:
+        held = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+        return None if held is not None and normalised(held) == normalised(got) else f"{path.relative_to(ROOT)} is not what Jellyfin answers now"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(got, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return None
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--check", action="store_true", help="record again and compare with conformance/")
+    checking = parser.parse_args().check
+
+    pinned, listens, speaks = manifest()
+    said = recorded_live(pinned, listens)
+    faults = [fault for spoken in speaks for case in published_cases(spoken)
+              if (fault := filed(said, spoken, case["case"], checking)) is not None]
     for fault in faults:
         print(f"::error::{fault}")
     print(f"{len(said)} cases asked against {pinned}; {len(faults)} fault(s).")

@@ -1,34 +1,16 @@
 {
-  "lemonfiber": "0.16.0",
+  "lemonfiber": "081b2de990d68d64f91569e3ffc1415c3831ea51",
   "against": "recordings",
   "proofs": [
     {
-      "id": "kavita.serves",
+      "id": "jellyfin.identifies",
       "kind": "proof",
       "outcome": "passed",
       "detail": ""
     },
     {
-      "id": "kavita.status-is-not-an-answer",
+      "id": "jellyfin.guarded",
       "kind": "proof",
-      "outcome": "passed",
-      "detail": ""
-    },
-    {
-      "id": "media.serve/guarded",
-      "kind": "probe",
-      "outcome": "passed",
-      "detail": ""
-    },
-    {
-      "id": "media.serve/catalogue",
-      "kind": "probe",
-      "outcome": "passed",
-      "detail": ""
-    },
-    {
-      "id": "kavita:settings-guarded",
-      "kind": "check",
       "outcome": "passed",
       "detail": ""
     }
