@@ -20,9 +20,11 @@ Two services, declared in [`plugin.toml`](plugin.toml).
 | `jellyfin` | `docker.io/jellyfin/jellyfin`, `10.11.11`, by digest | Jellyfin itself. It answers other services in its own API, which the manifest declares as `native = "jellyfin"`, on port 8096 inside the stack's network. |
 | `jellyfin-adapter` | `ghcr.io/lemonfiber/jellyfin-adapter`, by digest | The adapter. It speaks lemonfiber's `media.serve@1` and `identity.source@1` contracts on port 8080 and asks `jellyfin` for every answer. |
 
-Neither service publishes a port to the household. lemonfiber reaches the
-adapter on this machine's loopback, at a port the engine assigns. The household
-reaches Jellyfin through the stack's stream guard, as it reaches the bundled one.
+Neither service publishes a port to the household. `jellyfin` publishes 8095
+on this machine's loopback, the port the bundled Jellyfin is published on, and
+lemonfiber reaches the adapter on the loopback at a port the engine assigns. The
+household reaches Jellyfin through the stack's stream guard, as it reaches the
+bundled one.
 
 ## What it keeps from the bundled Jellyfin
 
@@ -33,10 +35,13 @@ update (ADR-0042). The upstream keeps:
 - **The configuration directory** `config/jellyfin` in the stack directory,
   mounted at `/config`, which holds Jellyfin's database, accounts and settings.
 - **The data root**, mounted at `/data`, as the bundled service mounts it.
+- **The user it runs as**, the operator's uid and gid, so everything it wrote
+  under the bundled service stays its own.
+- **The published port**, 8095 on this machine's loopback.
 
-The bundled service also mounts `config/jellyfin/cache` at `/cache`. A plugin's
-service has one configuration directory, so this one does not. The directory
-stays on disk, and Jellyfin builds its cache again inside the container.
+The bundled service mounts `config/jellyfin/cache` at `/cache`. This one mounts
+`/cache` from its own mount tree, `mounts/jellyfin/cache`. The old directory
+stays on disk, and Jellyfin builds its cache again in the new one.
 
 ## What the adapter holds
 

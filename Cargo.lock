@@ -512,8 +512,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-adapter-kit"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "axum",
  "lemonfiber-contract",
@@ -524,8 +524,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-bundle"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "ring",
  "serde",
@@ -535,8 +535,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-bundled"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "lemonfiber-bundle",
  "lemonfiber-manifest",
@@ -544,8 +544,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-contract"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "async-trait",
  "lemonfiber-ports",
@@ -558,8 +558,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-error"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "schemars",
  "serde",
@@ -567,8 +567,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-fixtures"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "async-trait",
  "lemonfiber-manifest",
@@ -578,8 +578,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-manifest"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "schemars",
  "serde",
@@ -590,8 +590,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-plugin"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "lemonfiber-bundled",
  "lemonfiber-contract",
@@ -606,8 +606,8 @@ dependencies = [
 
 [[package]]
 name = "lemonfiber-ports"
-version = "0.18.0-pre.1"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=081b2de990d68d64f91569e3ffc1415c3831ea51#081b2de990d68d64f91569e3ffc1415c3831ea51"
+version = "0.17.0"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
 dependencies = [
  "async-trait",
  "base64",
