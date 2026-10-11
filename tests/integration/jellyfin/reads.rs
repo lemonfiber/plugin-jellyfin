@@ -109,3 +109,30 @@ async fn an_account_holding_back_any_unrated_kind_holds_back_unrated_things() {
     });
     assert_eq!(held, Some(vec![Unrated::HeldBack, Unrated::LetThrough]));
 }
+
+#[tokio::test]
+async fn the_country_its_ratings_are_named_for_is_two_capital_letters_or_none() {
+    for (configuration, country) in [
+        (r#"{"MetadataCountryCode":"gb"}"#, Some("GB")),
+        (r#"{"MetadataCountryCode":"US"}"#, Some("US")),
+        (r#"{"MetadataCountryCode":""}"#, None),
+        (r#"{"MetadataCountryCode":"G1"}"#, None),
+        (r#"{"MetadataCountryCode":"GBR"}"#, None),
+        (r#"{"ServerName":"nas"}"#, None),
+    ] {
+        let fake = Fake::in_turn(vec![
+            Answer::reply(200, SIGNED_IN),
+            Answer::reply(200, configuration),
+        ]);
+        assert_eq!(
+            reader(&fake).country().await.ok(),
+            Some(country.map(str::to_owned)),
+            "{configuration}"
+        );
+        assert!(fake.requests().iter().any(
+            |asked| asked.method == Method::Get && asked.url.ends_with("/System/Configuration")
+        ));
+    }
+    let refused = Fake::in_turn(vec![Answer::reply(200, SIGNED_IN), Answer::reply(500, "")]);
+    assert!(reader(&refused).country().await.is_err());
+}

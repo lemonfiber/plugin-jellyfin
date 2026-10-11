@@ -16,6 +16,12 @@ in front of Jellyfin. The adapter is the Rust crate at the root, built on
 image the `Dockerfile` builds. `release.yml` publishes that image from the
 train's tag and proposes its digest to `plugin.toml`.
 
+`conformance/` holds one recording per case of each contract the adapter speaks,
+written by `.github/record.py` against a throwaway Jellyfin at the digest
+`plugin.toml` pins. Re-record whenever the adapter's answers or that digest
+change. `tests/conformance.rs` reads every recording with the core's own client,
+and `tests/manifest.rs` holds `plugin.toml` to the pinned core's own rules.
+
 `.github/reader/` is a byte-identical copy of plugin-template's harness. Change it
 there, then copy it here.
 
