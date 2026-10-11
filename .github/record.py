@@ -195,6 +195,7 @@ def recorded(adapter: Adapter, pinned: str, password: str) -> dict[tuple[str, st
         "When each invitation was sent, from what Jellyfin recorded happening.")
     ask(identity, "libraries", {}, "The libraries of a Jellyfin nobody has given one.")
     ask(identity, "ratings", {}, "The certificates in Jellyfin's rating table for its default country.")
+    ask(identity, "country", {}, "The country Jellyfin's rating table is named for, as its configuration names it.")
     ask(identity, "allow", {"id": bo, "allowed": {"age_limit": 12, "unrated": "held-back"}},
         "An age limit and unrated content held back, written over the account's own policy.")
     ask(identity, "claimable", {"id": bo, "allowed": {"libraries": []}},

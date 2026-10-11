@@ -16,6 +16,8 @@ use lemonfiber_ports::service::{
 
 const SESSIONS: &str = "/Sessions";
 
+const METADATA_COUNTRY: &str = "MetadataCountryCode";
+
 #[derive(serde::Deserialize)]
 struct UserResource {
     #[serde(rename = "Id", default)]
@@ -233,6 +235,17 @@ impl Household for Jellyfin {
                 })
             })
             .collect())
+    }
+
+    async fn country(&self) -> Result<Option<String>, Failure> {
+        let configuration =
+            super::configured::document(self, super::configured::CONFIGURATION, "the country")
+                .await?;
+        Ok(configuration
+            .get(METADATA_COUNTRY)
+            .and_then(serde_json::Value::as_str)
+            .filter(|code| code.len() == 2 && code.bytes().all(|byte| byte.is_ascii_alphabetic()))
+            .map(str::to_ascii_uppercase))
     }
 
     async fn allow(&self, id: &str, allowed: &Allowed) -> Result<(), Failure> {
