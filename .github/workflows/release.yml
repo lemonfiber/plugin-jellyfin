@@ -226,6 +226,11 @@ jobs:
     needs: [settle, publish]
     runs-on: ubuntu-latest
     environment: release
+    outputs:
+      branch: ${{ steps.pinned.outputs.branch }}
+      head: ${{ steps.pinned.outputs.head }}
+      title: ${{ steps.pinned.outputs.title }}
+      body: ${{ steps.pinned.outputs.body }}
     steps:
       - name: Mint a token that can write the manifest
         id: token
@@ -235,7 +240,8 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-      - name: Point the rolling pull request at what this tag published
+      - name: Put what this tag published on the rolling branch
+        id: pinned
         env:
           GH_TOKEN: ${{ steps.token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
@@ -278,20 +284,41 @@ jobs:
             "chore(manifest): the adapter at ${TAG}" \
             "Spec: F14-R15" \
             "Signed-off-by: lemonfiber release <info@nightworks.io>")"
-          gh api --method PUT "repos/${REPOSITORY}/contents/plugin.toml" \
+          head="$(gh api --method PUT "repos/${REPOSITORY}/contents/plugin.toml" \
             -f "message=${message}" \
             -f "content=$(base64 -w0 plugin.toml)" \
             -f "sha=$(python3 -c 'import json; print(json.load(open("held.json"))["sha"])')" \
-            -f "branch=${PIN_BRANCH}" >/dev/null
-          body="$(printf '%s\n\n%s\n\n%s\n' \
-            "The adapter service in plugin.toml runs the image ${TAG} published, at ${DIGEST}." \
-            "Spec: F14-R15" \
-            "Signed-off-by: lemonfiber release <info@nightworks.io>")"
-          open="$(gh pr list --repo "$REPOSITORY" --head "$PIN_BRANCH" --state open --json number --jq '.[0].number // empty')"
-          if [ -n "$open" ]; then
-            gh pr edit "$open" --repo "$REPOSITORY" --title "chore(manifest): the adapter at ${TAG}" --body "$body"
-          else
-            gh pr create --repo "$REPOSITORY" --base main --head "$PIN_BRANCH" \
-              --title "chore(manifest): the adapter at ${TAG}" --body "$body"
-          fi
+            -f "branch=${PIN_BRANCH}" --jq .commit.sha)"
+          # Handed to the next job, which opens or edits the pull request. The
+          # delimiter is random, so no line of the body can end the value.
+          delimiter="body_$(openssl rand -hex 16)"
+          {
+            echo "branch=${PIN_BRANCH}"
+            echo "head=${head}"
+            echo "title=chore(manifest): the adapter at ${TAG}"
+            echo "body<<${delimiter}"
+            printf '%s\n\n%s\n\n%s\n' \
+              "The adapter service in plugin.toml runs the image ${TAG} published, at ${DIGEST}." \
+              "Spec: F14-R15" \
+              "Signed-off-by: lemonfiber release <info@nightworks.io>"
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
           echo "the manifest's adapter is proposed at ${TAG}, ${DIGEST}."
+          permission-contents: write
+
+  # The pull request is opened, or the open one edited, only where it is this
+  # workflow's own: the release app opened it from this repository's branch and
+  # it is at the commit above (OPS-R87).
+  pull-request:
+    needs: pin
+    if: needs.pin.outputs.head != ''
+    permissions:
+      contents: read
+    uses: lemonfiber/spec/.github/workflows/rolling-pull-request.yml@be0b484aa5c2a7e2a6cee4b33866143634e6e1df # v1.0.70
+    with:
+      branch: ${{ needs.pin.outputs.branch }}
+      head: ${{ needs.pin.outputs.head }}
+      title: ${{ needs.pin.outputs.title }}
+      body: ${{ needs.pin.outputs.body }}
+    secrets:
+      RELEASE_APP_KEY: ${{ secrets.RELEASE_APP_KEY }}
