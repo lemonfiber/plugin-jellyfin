@@ -132,6 +132,7 @@ jobs:
   # but the ids and moments Jellyfin makes up for each instance (ARCH-R217).
   recordings:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -146,6 +147,7 @@ jobs:
   # `plugin-template` is where it is written.
   harness:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

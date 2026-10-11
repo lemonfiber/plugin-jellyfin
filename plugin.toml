@@ -1,4 +1,4 @@
-#:schema https://github.com/lemonfiber/lemonfiber/releases/download/v0.17.0/plugin-manifest.schema.json
+#:schema https://raw.githubusercontent.com/lemonfiber/lemonfiber/081b2de990d68d64f91569e3ffc1415c3831ea51/contract/plugin-manifest.schema.json
 # Jellyfin, as a first-party lemonfiber plugin (ADR-0041, ADR-0042).
 #
 # Contract: https://github.com/lemonfiber/spec/blob/main/20-architecture/contracts/plugin-manifest.md
