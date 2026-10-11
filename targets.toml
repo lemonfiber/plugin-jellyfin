@@ -15,5 +15,9 @@
 # `main` does not hold, builds this one the way the release train builds the
 # build it is about to tag, keeps it in `.lemonfiber/`, and asks it about the
 # plugin, so every verdict CI reports is that build's own.
+#
+# The core crates in `Cargo.toml` are pinned at the same commit, so the adapter is
+# built against the core it is proved against, and `tests/targets.rs` fails where
+# the two disagree.
 
 commit = "081b2de990d68d64f91569e3ffc1415c3831ea51"
