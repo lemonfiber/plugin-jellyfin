@@ -1,5 +1,5 @@
 {
-  "lemonfiber": "081b2de990d68d64f91569e3ffc1415c3831ea51",
+  "lemonfiber": "5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387",
   "against": "recordings",
   "proofs": [
     {
@@ -10,6 +10,12 @@
     },
     {
       "id": "jellyfin.guarded",
+      "kind": "proof",
+      "outcome": "passed",
+      "detail": ""
+    },
+    {
+      "id": "jellyfin.catalogue-guarded",
       "kind": "proof",
       "outcome": "passed",
       "detail": ""

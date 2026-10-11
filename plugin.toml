@@ -1,4 +1,4 @@
-#:schema https://raw.githubusercontent.com/lemonfiber/lemonfiber/081b2de990d68d64f91569e3ffc1415c3831ea51/contract/plugin-manifest.schema.json
+#:schema https://raw.githubusercontent.com/lemonfiber/lemonfiber/5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387/contract/plugin-manifest.schema.json
 # Jellyfin, as a first-party lemonfiber plugin (ADR-0041, ADR-0042).
 #
 # Contract: https://github.com/lemonfiber/spec/blob/main/20-architecture/contracts/plugin-manifest.md
@@ -29,13 +29,23 @@ name        = "Jellyfin"
 image       = "docker.io/jellyfin/jellyfin"
 digest      = "sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db"
 tag         = "10.11.11"
+port        = 8095
+bind        = "loopback"
 health      = { kind = "http", path = "/health", timeout_s = 120 }
 criticality = "important"
+memory_mib  = 600
+reaches     = "metadata providers and its own plugin repository"
+asks_for    = "Reads artwork and descriptions for what is in your library, and checks its plugin repository for updates unless you turn that off in its own settings."
 takes_data  = true
 config_path = "/config"
 listens     = 8096
+user_mode   = "uid"
 native      = "jellyfin"
 replaces    = "jellyfin"
+
+[[service.mount]]
+from = "cache"
+to   = "/cache"
 
 [[service]]
 id          = "jellyfin-adapter"
@@ -44,6 +54,8 @@ image       = "ghcr.io/lemonfiber/jellyfin-adapter"
 digest      = "sha256:d8c095d5fb22dd096681da76d5f9be5d97b4b68f90b00edc56881dd5302f4f39"
 tag         = "main-f9e66151a1e3"
 criticality = "important"
+reaches     = ""
+asks_for    = "Nothing beyond this machine. It answers lemonfiber's media.serve and identity.source contracts by calling Jellyfin, beside it, with the key lemonfiber minted for it."
 config_path = "/config"
 listens     = 8080
 speaks      = ["media.serve@1", "identity.source@1"]
@@ -74,4 +86,16 @@ administrator. A Jellyfin that answered this to a caller presenting nothing
 would be naming every member to every device that can reach it.
 """
 request = { method = "GET", path = "/Users" }
+expect  = { status = 401 }
+
+[[proof]]
+id      = "jellyfin.catalogue-guarded"
+service = "jellyfin"
+title   = "Jellyfin shows its catalogue to nobody presenting nothing"
+fixture = "fixtures/items-unauthenticated.json"
+why     = """
+A media server on the household network that answered this would be
+publishing the household's library to every device that can reach it.
+"""
+request = { method = "GET", path = "/Items" }
 expect  = { status = 401 }
