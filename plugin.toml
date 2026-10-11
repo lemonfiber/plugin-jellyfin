@@ -5,9 +5,10 @@
 #
 # Two services. `jellyfin` is the upstream, under the container name, the
 # configuration directory (config/jellyfin, mounted at /config) and the data root
-# the bundled Jellyfin uses, so an install moves to this plugin in place
-# (ADR-0042 §4). `jellyfin-adapter` speaks the contracts in front of it; its
-# digest is the one release.yml's rolling pull request pins.
+# the bundled Jellyfin uses. It `replaces` the bundled Jellyfin, so an install
+# moves to this plugin in place (ADR-0042 §4). `jellyfin-adapter` speaks the
+# contracts in front of it; its digest is the one release.yml's rolling pull
+# request pins.
 
 schema_version = 1
 
@@ -33,6 +34,7 @@ takes_data  = true
 config_path = "/config"
 listens     = 8096
 native      = "jellyfin"
+replaces    = "jellyfin"
 
 [[service]]
 id          = "jellyfin-adapter"

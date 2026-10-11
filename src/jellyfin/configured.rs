@@ -41,11 +41,7 @@ impl Listed {
     }
 
     async fn document(&self, jellyfin: &Jellyfin) -> Result<serde_json::Value, Failure> {
-        let response = jellyfin.as_admin(Method::Get, self.document, None).await?;
-        jellyfin.endpoint.decode(
-            &response,
-            &format!("the document holding {} could not be read", self.what),
-        )
+        document(jellyfin, self.document, self.what).await
     }
 
     fn entries(&self, document: &serde_json::Value) -> Vec<String> {
@@ -61,4 +57,18 @@ impl Listed {
             })
             .unwrap_or_default()
     }
+}
+
+pub(super) const CONFIGURATION: &str = "/System/Configuration";
+
+pub(super) async fn document(
+    jellyfin: &Jellyfin,
+    path: &str,
+    what: &str,
+) -> Result<serde_json::Value, Failure> {
+    let response = jellyfin.as_admin(Method::Get, path, None).await?;
+    jellyfin.endpoint.decode(
+        &response,
+        &format!("the document holding {what} could not be read"),
+    )
 }

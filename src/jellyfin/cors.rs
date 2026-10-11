@@ -1,10 +1,10 @@
 use lemonfiber_ports::service::Failure;
 
-use super::configured::Listed;
+use super::configured::{Listed, CONFIGURATION};
 use super::Jellyfin;
 
 const ORIGINS: Listed = Listed {
-    document: "/System/Configuration",
+    document: CONFIGURATION,
     field: "CorsHosts",
     what: "the allow-list",
 };
