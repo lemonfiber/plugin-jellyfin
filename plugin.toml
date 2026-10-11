@@ -7,8 +7,9 @@
 # configuration directory (config/jellyfin, mounted at /config) and the data root
 # the bundled Jellyfin uses. It `replaces` the bundled Jellyfin, so an install
 # moves to this plugin in place (ADR-0042 §4). `jellyfin-adapter` speaks the
-# contracts in front of it; its digest is the one release.yml's rolling pull
-# request pins.
+# contracts in front of it. release.yml publishes it from every commit on main,
+# tagged `main-<commit>`, and from every train tag, and its rolling pull requests
+# move the digest and tag below to what was published.
 
 schema_version = 1
 
@@ -40,8 +41,8 @@ replaces    = "jellyfin"
 id          = "jellyfin-adapter"
 name        = "Jellyfin adapter"
 image       = "ghcr.io/lemonfiber/jellyfin-adapter"
-digest      = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
-tag         = "0.18.0"
+digest      = "sha256:2ba337204bdd4467acffd7b90bce035cd6a6495e031f824483f96a9e9c2bda8a"
+tag         = "main-f70130e2e044"
 criticality = "important"
 config_path = "/config"
 listens     = 8080
