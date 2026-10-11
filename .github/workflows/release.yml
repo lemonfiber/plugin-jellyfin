@@ -225,6 +225,7 @@ jobs:
   pin:
     needs: [settle, publish]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment: release
     outputs:
       branch: ${{ steps.pinned.outputs.branch }}
