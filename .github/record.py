@@ -142,6 +142,13 @@ def normalised(value):
     return value
 
 
+def written(configuration: pathlib.Path, password: str) -> None:
+    """The administrator's credential, written where lemonfiber writes it, owner-only."""
+    held = configuration / "upstream.json"
+    held.write_text(json.dumps({"username": ADMIN, "password": password}), encoding="utf-8")
+    held.chmod(0o600)
+
+
 def started(pinned: str, listens: int, network: str, configuration: pathlib.Path, name: str) -> str:
     """Jellyfin and the adapter running beside it, and where the adapter answers."""
     docker("network", "create", network)
@@ -162,7 +169,7 @@ def started(pinned: str, listens: int, network: str, configuration: pathlib.Path
     raise RuntimeError(f"Jellyfin did not answer its health within {STARTUP_S}s")
 
 
-def recorded(adapter: Adapter, pinned: str, password: str) -> dict[tuple[str, str], dict]:
+def recorded(adapter: Adapter, pinned: str, password: str, keep) -> dict[tuple[str, str], dict]:
     """Every case, asked in an order that leaves each something to answer about."""
     identity, media = "identity.source", "media.serve"
     said: dict[tuple[str, str], dict] = {}
@@ -204,6 +211,10 @@ def recorded(adapter: Adapter, pinned: str, password: str) -> dict[tuple[str, st
     ask(identity, "sessions", {"member": admin}, "The devices signed in to the administrator's account.")
     ask(identity, "signs_devices_in", {}, "Whether a new device signs in by a code.")
     ask(identity, "withdraw", {"id": bo}, "An account withdrawn.")
+    replacement = secrets.token_urlsafe(24)
+    ask(identity, "replace_admin_password", {"replacement": replacement},
+        "The administrator's password replaced, signed in with the one in force and proved with the replacement.")
+    keep(replacement)
 
     ask(media, "signed_in", {"member": ana, "device": "recorder-0003"},
         "A device's session opened on a member's account by a code. The token is written as REDACTED.")
@@ -253,14 +264,13 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as held:
         configuration = pathlib.Path(held)
         (configuration / "lemonfiber.key").write_text(key, encoding="utf-8")
-        (configuration / "upstream.json").write_text(
-            json.dumps({"username": ADMIN, "password": password}), encoding="utf-8")
+        written(configuration, password)
         for file in configuration.iterdir():
             file.chmod(0o600)
         configuration.chmod(0o700)
         try:
             base = started(pinned, listens, network, configuration, name)
-            said = recorded(Adapter(base, key), pinned, password)
+            said = recorded(Adapter(base, key), pinned, password, lambda replacement: written(configuration, replacement))
         finally:
             for container in (f"{name}-adapter", f"{name}-jellyfin"):
                 docker("rm", "-fv", container, check=False)

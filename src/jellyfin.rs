@@ -135,6 +135,14 @@ impl Jellyfin {
 struct Session {
     #[serde(rename = "AccessToken", default)]
     access_token: String,
+    #[serde(rename = "User", default)]
+    user: SessionUser,
+}
+
+#[derive(Deserialize, Default)]
+struct SessionUser {
+    #[serde(rename = "Id", default)]
+    id: String,
 }
 
 const fn item_type(kind: Kind) -> &'static str {
