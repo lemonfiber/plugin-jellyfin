@@ -513,7 +513,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-adapter-kit"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "axum",
  "lemonfiber-contract",
@@ -525,8 +525,10 @@ dependencies = [
 [[package]]
 name = "lemonfiber-bundle"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
+ "lemonfiber-manifest",
+ "libc",
  "ring",
  "serde",
  "thiserror",
@@ -536,7 +538,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-bundled"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "lemonfiber-bundle",
  "lemonfiber-manifest",
@@ -545,7 +547,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-contract"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "async-trait",
  "lemonfiber-ports",
@@ -559,7 +561,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-error"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "schemars",
  "serde",
@@ -568,7 +570,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-fixtures"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "async-trait",
  "lemonfiber-manifest",
@@ -579,7 +581,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-manifest"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "schemars",
  "serde",
@@ -591,7 +593,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-plugin"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "lemonfiber-bundled",
  "lemonfiber-contract",
@@ -607,7 +609,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-ports"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387#5e3ef10f7037f6a53d5bfd2cf87ed1c69cbc4387"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=675430a7b93f8a4abbd859b5fe7702f836bd3207#675430a7b93f8a4abbd859b5fe7702f836bd3207"
 dependencies = [
  "async-trait",
  "base64",
@@ -885,9 +887,9 @@ checksum = "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d"
 
 [[package]]
 name = "rustls"
-version = "0.23.45"
+version = "0.23.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d41d731c7d2f962d1ccc364cec258de3c0e93b38c2fb3ba97ac74513048d634"
+checksum = "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
 dependencies = [
  "once_cell",
  "ring",
