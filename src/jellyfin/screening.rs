@@ -12,7 +12,7 @@ use lemonfiber_ports::service::{
 
 const TICKS: u64 = 10_000_000;
 
-const ABSENT: u16 = 404;
+pub(super) const ABSENT: u16 = 404;
 
 const SIGNS_NONE_IN: [u16; 2] = [401, 403];
 
@@ -199,11 +199,15 @@ async fn opened(
 }
 
 fn pictured_at(id: Id<'_>, which: Picture) -> String {
+    picture_path(id, which)
+}
+
+pub(super) fn picture_path(item: impl std::fmt::Display, which: Picture) -> String {
     let named = match which {
         Picture::Poster => "Primary",
         Picture::Backdrop => "Backdrop",
     };
-    format!("/Items/{id}/Images/{named}")
+    format!("/Items/{item}/Images/{named}")
 }
 
 async fn pictured(

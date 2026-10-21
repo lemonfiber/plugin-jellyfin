@@ -66,6 +66,7 @@ const A_SHELF: &str = r#"{"Items":[
 
 mod accounts;
 mod cors;
+mod declaring;
 mod keys;
 mod library;
 mod pictures;

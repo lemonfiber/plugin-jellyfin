@@ -121,9 +121,9 @@ def recording(pinned: str, path: str, status: int, kind: str, body: str, note: s
 
 
 def redacted(value):
-    """`value` with every access token and minted key written as REDACTED."""
+    """`value` with every access token and minted key written as REDACTED; a declaration's token is how one is presented, and is kept."""
     if isinstance(value, dict):
-        return {key: REDACTED if key == "token" else redacted(inner) for key, inner in value.items()}
+        return {key: REDACTED if key == "token" and isinstance(inner, str) else redacted(inner) for key, inner in value.items()}
     if isinstance(value, list):
         return [redacted(inner) for inner in value]
     return value
@@ -234,6 +234,7 @@ def recorded(adapter: Adapter, pinned: str, password: str, keep) -> dict[tuple[s
     ask(media, "trust_only", {"address": "192.0.2.18"}, "One address alone trusted to name the client, and read back.")
     ask(media, "allowed_origins", {}, "The origins a browser may read Jellyfin from on a fresh one.")
     ask(media, "allow_only", {"origin": "https://watch.example"}, "One origin alone allowed, and read back.")
+    ask(media, "declared", {}, "What a guard in front of Jellyfin enforces and where it serves each item, answered without asking Jellyfin.")
     ask(media, "filed_as", {"app": "lemonfiber-recorder"}, "The keys filed under a name nothing has a key under.")
     key = ask(media, "mint", {"app": "lemonfiber-recorder"}, "A key minted under that name. The key is written as REDACTED.")
     ask(media, "dated", {"app": "lemonfiber-recorder"}, "When the one key filed under that name was made and last used.")
