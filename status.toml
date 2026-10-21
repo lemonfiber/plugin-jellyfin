@@ -9,6 +9,7 @@
 # and embedding this plugin in the default bundle are the core's.
 
 requirement = [
+  { id = "ARCH-R206", state = "done", evidence = ["src/jellyfin/declared.rs", "tests/integration/jellyfin/declaring.rs::the_declaration_is_one_a_guard_can_enforce", "conformance/media.serve@1/declared-answers.json"] },
   { id = "F14-R6", state = "partial", evidence = ["src/adapter.rs", "src/adapter/tests.rs::it_speaks_both_contracts_and_names_the_release_its_recordings_were_taken_from"] },
   { id = "F14-R15", state = "partial", evidence = ["Cargo.toml", "Dockerfile", ".github/workflows/release.yml"] },
   { id = "F14-R27", state = "partial", evidence = ["Dockerfile", ".github/workflows/adapter.yml"] },

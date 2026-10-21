@@ -13,6 +13,7 @@ use crate::endpoint::Endpoint;
 
 mod configured;
 mod cors;
+mod declared;
 mod household;
 mod item;
 mod keys;

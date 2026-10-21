@@ -3,6 +3,15 @@
 version = 4
 
 [[package]]
+name = "aho-corasick"
+version = "1.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c982642fa9e8606056828ee9a8505737230110bb1099153c79efe865c59d12ba"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -490,6 +499,7 @@ dependencies = [
  "lemonfiber-fixtures",
  "lemonfiber-plugin",
  "lemonfiber-ports",
+ "regex",
  "reqwest",
  "ring",
  "serde",
@@ -513,7 +523,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-adapter-kit"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "axum",
  "lemonfiber-contract",
@@ -525,7 +535,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-bundle"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "lemonfiber-manifest",
  "libc",
@@ -538,7 +548,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-bundled"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "lemonfiber-bundle",
  "lemonfiber-manifest",
@@ -547,7 +557,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-contract"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "async-trait",
  "lemonfiber-ports",
@@ -561,7 +571,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-error"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "schemars",
  "serde",
@@ -570,7 +580,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-fixtures"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "async-trait",
  "lemonfiber-bundled",
@@ -583,7 +593,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-manifest"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "schemars",
  "serde",
@@ -595,7 +605,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-plugin"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "lemonfiber-bundled",
  "lemonfiber-contract",
@@ -611,16 +621,19 @@ dependencies = [
 [[package]]
 name = "lemonfiber-ports"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=e4312fc4389490bd21e4f7c2b5c6201ecee4b303#e4312fc4389490bd21e4f7c2b5c6201ecee4b303"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=7343ad109f993c0459be32d5876bed1aa7f6b42e#7343ad109f993c0459be32d5876bed1aa7f6b42e"
 dependencies = [
  "async-trait",
  "base64",
  "lemonfiber-error",
  "lemonfiber-manifest",
+ "regex",
+ "regex-syntax",
  "schemars",
  "serde",
  "thiserror",
  "tokio",
+ "url",
 ]
 
 [[package]]
@@ -828,6 +841,35 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "regex"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-automata"
+version = "0.4.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad8553b9b26413251cbf30e620595c7a41b3887f03da04579c0e6b0d6a06b4b2"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-syntax"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "reqwest"
