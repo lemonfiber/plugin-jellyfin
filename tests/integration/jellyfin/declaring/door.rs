@@ -67,7 +67,7 @@ fn differing(declared: &Declared, cases: &[Case]) -> Vec<String> {
 #[tokio::test]
 async fn a_guard_enforcing_the_declaration_answers_every_case_of_the_door_as_the_door_does() {
     let cases: Vec<Case> = serde_json::from_str(include_str!("door.json")).unwrap_or_default();
-    assert_eq!(cases.len(), 87);
+    assert_eq!(cases.len(), 91);
     let declared = declared().await;
     assert_eq!(
         declared.map(|declared| differing(&declared, &cases)),
