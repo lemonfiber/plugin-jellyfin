@@ -71,7 +71,7 @@ fn declared() -> Declared {
     Declared {
         bytes: vec![
             byte_path(
-                &format!("Videos/{ITEM_SEGMENT}/Trickplay/[^/]+/tiles\\.m3u8/?$"),
+                &format!("Videos/{ITEM_SEGMENT}/Trickplay(?:/|$)"),
                 Vec::new(),
                 trickplay,
             ),

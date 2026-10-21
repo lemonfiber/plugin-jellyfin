@@ -6,6 +6,9 @@ use lemonfiber_ports::service::{
 
 use super::jellyfin;
 
+mod door;
+mod guard;
+
 const PREFIXED: &str = "(?i)^(?:/emby|/mediabrowser)?";
 
 async fn declared() -> Option<Declared> {
@@ -40,7 +43,7 @@ async fn every_byte_route_is_matched_at_the_root_and_under_both_prefixes_without
     assert_eq!(
         patterns,
         Some(vec![
-            format!("{PREFIXED}/Videos/(?P<item>[^/]+)/Trickplay/[^/]+/tiles\\.m3u8/?$"),
+            format!("{PREFIXED}/Videos/(?P<item>[^/]+)/Trickplay(?:/|$)"),
             format!("{PREFIXED}/(?:Videos|Audio|LiveTv/LiveStreamFiles|LiveTv/LiveRecordings)/(?P<item>[^/]+)(?:/|$)"),
             format!("{PREFIXED}/Items/(?P<item>[^/]+)/(?:Images|Download|File)(?:/|$)"),
         ])
@@ -71,7 +74,7 @@ async fn only_the_two_routes_under_videos_that_name_no_item_pass_unasked() {
 }
 
 #[tokio::test]
-async fn every_byte_route_refuses_another_item_and_a_trickplay_playlist_asks_about_its_source() {
+async fn every_byte_route_refuses_another_item_and_every_trickplay_route_asks_about_its_source() {
     let naming: Option<Vec<Vec<(String, Held)>>> = declared().await.map(|declared| {
         declared
             .bytes

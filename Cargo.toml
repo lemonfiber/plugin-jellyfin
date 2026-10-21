@@ -31,6 +31,7 @@ axum = { version = "0.8", default-features = false, features = ["http1", "tokio"
 tower = { version = "0.5", default-features = false, features = ["util"] }
 lemonfiber-fixtures = { git = "https://github.com/lemonfiber/lemonfiber", rev = "7343ad109f993c0459be32d5876bed1aa7f6b42e" }
 lemonfiber-plugin = { git = "https://github.com/lemonfiber/lemonfiber", rev = "7343ad109f993c0459be32d5876bed1aa7f6b42e" }
+regex = "1"
 toml = "1.1"
 
 [lints.rust]

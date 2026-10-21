@@ -499,6 +499,7 @@ dependencies = [
  "lemonfiber-fixtures",
  "lemonfiber-plugin",
  "lemonfiber-ports",
+ "regex",
  "reqwest",
  "ring",
  "serde",
