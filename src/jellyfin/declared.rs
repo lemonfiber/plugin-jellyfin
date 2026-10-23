@@ -4,8 +4,8 @@ use super::screening::{picture_path, ABSENT};
 use super::{carrying, Jellyfin, AUTHORIZATION_HEADER};
 use lemonfiber_ports::http::Method;
 use lemonfiber_ports::service::{
-    Addressee, Answers, BytePath, Declared, Declaring, Failure, Held, Locations, Naming, Picture,
-    Ports, Presentation, Question, Statuses, Token, BASE, ITEM, TOKEN,
+    Addressee, Answers, BytePath, Declared, Declaring, Failure, Held, LivePath, Locations, Naming,
+    Picture, Ports, Presentation, Question, Statuses, Token, BASE, ITEM, TOKEN,
 };
 
 const PORT: u16 = 8096;
@@ -15,6 +15,8 @@ const GUARDED: u16 = 8920;
 const PREFIXED: &str = "(?i)^(?:/emby|/mediabrowser)?";
 
 const ITEM_SEGMENT: &str = "(?P<item>[^/]+)";
+
+const STREAM_SEGMENT: &str = "(?P<stream>[^/]+)";
 
 const ITEM_ID: &str = "(?i)^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$";
 
@@ -86,6 +88,10 @@ fn declared() -> Declared {
                 refusing(),
             ),
         ],
+        live: vec![LivePath {
+            pattern: format!("{PREFIXED}/LiveTv/LiveStreamFiles/{STREAM_SEGMENT}/stream\\."),
+            stream: HEX.to_owned(),
+        }],
         refused: vec![
             format!("{PREFIXED}/{BY_NAME}/[^/]+/Images(?:/|$)"),
             format!("{PREFIXED}/Branding/Splashscreen/?$"),
