@@ -57,6 +57,69 @@ async fn every_byte_route_is_matched_at_the_root_and_under_both_prefixes_without
 }
 
 #[tokio::test]
+async fn a_live_streams_file_is_matched_at_the_root_and_under_both_prefixes_by_jellyfins_own_id() {
+    let live: Option<Vec<(String, String)>> = declared().await.map(|declared| {
+        declared
+            .live
+            .into_iter()
+            .map(|path| (path.pattern, path.stream))
+            .collect()
+    });
+    assert_eq!(
+        live,
+        Some(vec![(
+            format!("{PREFIXED}/LiveTv/LiveStreamFiles/(?P<stream>[^/]+)/stream\\."),
+            "^[0-9a-f]{32}$".to_owned(),
+        )])
+    );
+}
+
+#[tokio::test]
+async fn a_live_streams_file_names_the_live_stream_in_its_path_and_nothing_else_names_one() {
+    let live = declared()
+        .await
+        .map(|declared| declared.live)
+        .unwrap_or_default();
+    let compiled: Vec<(regex::Regex, regex::Regex)> = live
+        .iter()
+        .filter_map(|path| {
+            Some((
+                regex::Regex::new(&path.pattern).ok()?,
+                regex::Regex::new(&path.stream).ok()?,
+            ))
+        })
+        .collect();
+    assert_eq!(compiled.len(), 1);
+    let named = |path: &str| {
+        compiled.iter().find_map(|(pattern, shape)| {
+            let stream = pattern.captures(path)?.name("stream")?.as_str().to_owned();
+            Some(stream).filter(|stream| shape.is_match(stream))
+        })
+    };
+    let id = "0123456789abcdef0123456789abcdef";
+    for path in [
+        format!("/LiveTv/LiveStreamFiles/{id}/stream.ts"),
+        format!("/emby/livetv/livestreamfiles/{id}/stream.mkv"),
+        format!("/mediabrowser/LiveTv/LiveStreamFiles/{id}/stream.ts"),
+    ] {
+        assert_eq!(named(&path), Some(id.to_owned()), "{path}");
+    }
+    for path in [
+        format!(
+            "/LiveTv/LiveStreamFiles/{}/stream.ts",
+            id.to_ascii_uppercase()
+        ),
+        format!("/LiveTv/LiveStreamFiles/{id}"),
+        format!("/LiveTv/LiveStreamFiles/{id}/other.ts"),
+        format!("/Videos/{id}/stream.ts"),
+        format!("/elsewhere/LiveTv/LiveStreamFiles/{id}/stream.ts"),
+        format!("/LiveTv/LiveRecordings/{id}/stream"),
+    ] {
+        assert_eq!(named(&path), None, "{path}");
+    }
+}
+
+#[tokio::test]
 async fn only_the_two_routes_under_videos_that_name_no_item_pass_unasked() {
     let exempt: Option<Vec<Vec<String>>> = declared()
         .await

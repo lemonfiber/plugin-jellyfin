@@ -69,6 +69,12 @@
           ]
         }
       ],
+      "live": [
+        {
+          "pattern": "(?i)^(?:/emby|/mediabrowser)?/LiveTv/LiveStreamFiles/(?P<stream>[^/]+)/stream\\.",
+          "stream": "^[0-9a-f]{32}$"
+        }
+      ],
       "refused": [
         "(?i)^(?:/emby|/mediabrowser)?/(?:Artists|Genres|MusicGenres|Persons|Studios)/[^/]+/Images(?:/|$)",
         "(?i)^(?:/emby|/mediabrowser)?/Branding/Splashscreen/?$"
