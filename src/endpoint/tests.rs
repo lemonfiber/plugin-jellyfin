@@ -1,5 +1,7 @@
-use super::describe;
+use super::{describe, Endpoint};
+use lemonfiber_fixtures::http::Fake;
 use lemonfiber_ports::http::Response;
+use lemonfiber_ports::service::Failure;
 
 fn answered(status: u16, body: impl Into<String>) -> Response {
     Response {
@@ -108,4 +110,29 @@ fn shortening_an_error_body_uses_no_character_a_terminal_might_not_have() {
     let detail = describe(&response);
 
     assert!(detail.is_ascii(), "{detail}");
+}
+
+#[test]
+fn a_service_still_starting_is_not_answering_rather_than_refusing() {
+    let endpoint = Endpoint::new(
+        Fake::scripted(Vec::new()),
+        "http://jellyfin:8096",
+        "jellyfin",
+    );
+    assert!(matches!(
+        endpoint.expect_success(&answered(503, "<html>starting</html>")),
+        Err(Failure::Unavailable { service }) if service == "jellyfin"
+    ));
+    assert!(matches!(
+        endpoint.expect_success(&answered(502, "bad gateway")),
+        Err(Failure::Refused { .. })
+    ));
+    assert!(matches!(
+        endpoint.expect_success(&answered(500, "")),
+        Err(Failure::Refused { .. })
+    ));
+    assert!(matches!(
+        endpoint.decode::<serde_json::Value>(&answered(503, ""), "info"),
+        Err(Failure::Unavailable { .. })
+    ));
 }
