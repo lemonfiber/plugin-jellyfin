@@ -79,8 +79,9 @@ lemonfiber plugin install ./plugin-jellyfin
 - **Conformance.** Every case of both contracts is recorded under
   [`conformance/`](conformance), answered by this repository's adapter in front of
   Jellyfin at the pinned digest. `lemonfiber plugin conform` judges them without
-  running anything. `.github/record.py` takes them, and the `recordings` check
-  takes them again on every pull request and compares.
+  running anything. `lemonfiber plugin record .` takes them, and the `recordings`
+  check takes them again on every pull request with the adapter built from the
+  tree and compares.
 - **Proofs.** Two `[[proof]]` entries in the manifest hold the pinned Jellyfin to
   answering which server it is to anybody, and to refusing its account list to
   anybody who presents nothing. Their recordings are in [`fixtures/`](fixtures).
