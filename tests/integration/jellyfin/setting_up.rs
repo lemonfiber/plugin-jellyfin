@@ -39,10 +39,19 @@ async fn an_unreadable_public_info_is_refused() {
 
 #[tokio::test]
 async fn a_refused_public_info_carries_the_status() {
-    let fake = Fake::in_turn(vec![Answer::reply(503, "")]);
+    let fake = Fake::in_turn(vec![Answer::reply(500, "")]);
     assert!(matches!(
         jellyfin(&fake).startup_completed().await,
-        Err(Failure::Refused { .. })
+        Err(Failure::Refused { detail, .. }) if detail == "HTTP 500"
+    ));
+}
+
+#[tokio::test]
+async fn a_jellyfin_still_starting_is_unavailable() {
+    let fake = Fake::in_turn(vec![Answer::reply(503, "<html>starting</html>")]);
+    assert!(matches!(
+        jellyfin(&fake).startup_completed().await,
+        Err(Failure::Unavailable { .. })
     ));
 }
 

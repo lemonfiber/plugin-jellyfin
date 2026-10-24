@@ -5,6 +5,8 @@ use lemonfiber_ports::service::Failure;
 
 const DETAIL_LIMIT: usize = 200;
 
+const NOT_ANSWERING_YET: u16 = 503;
+
 const MARKER: &str = "...";
 
 /// Render form fields as an `application/x-www-form-urlencoded` query.
@@ -75,10 +77,12 @@ impl Endpoint {
         }
     }
 
-    /// A non-success response: a refused credential, or an answer that cannot be used.
+    /// A non-success response: a refused credential, a service saying it cannot answer
+    /// yet, or an answer that cannot be used.
     pub fn refusal(&self, response: &Response) -> Failure {
         match response.status {
             401 | 403 => self.unauthorised(),
+            NOT_ANSWERING_YET => self.unavailable(),
             _ => self.refused(&describe(response)),
         }
     }
