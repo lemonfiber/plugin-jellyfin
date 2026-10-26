@@ -216,7 +216,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -586,7 +586,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-adapter-kit"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "async-trait",
  "axum",
@@ -603,7 +603,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-bundle"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "lemonfiber-manifest",
  "libc",
@@ -616,7 +616,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-bundled"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "include_dir",
  "lemonfiber-bundle",
@@ -627,7 +627,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-contract"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "async-trait",
  "lemonfiber-ports",
@@ -641,7 +641,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-error"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "schemars",
  "serde",
@@ -650,7 +650,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-fixtures"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "async-trait",
  "lemonfiber-bundled",
@@ -663,7 +663,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-manifest"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "schemars",
  "serde",
@@ -675,7 +675,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-plugin"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "lemonfiber-bundled",
  "lemonfiber-contract",
@@ -691,7 +691,7 @@ dependencies = [
 [[package]]
 name = "lemonfiber-ports"
 version = "0.17.0"
-source = "git+https://github.com/lemonfiber/lemonfiber?rev=c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b#c0523e91c56bd5b4fdcf4de1c695f9a9a652e98b"
+source = "git+https://github.com/lemonfiber/lemonfiber?rev=c76afcb4d84f093cbb28cde90b9f2231ffcde0cd#c76afcb4d84f093cbb28cde90b9f2231ffcde0cd"
 dependencies = [
  "async-trait",
  "base64",
@@ -883,7 +883,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
