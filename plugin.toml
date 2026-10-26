@@ -1,4 +1,4 @@
-#:schema https://raw.githubusercontent.com/lemonfiber/lemonfiber/c76afcb4d84f093cbb28cde90b9f2231ffcde0cd/contract/plugin-manifest.schema.json
+#:schema https://raw.githubusercontent.com/lemonfiber/lemonfiber/ba363fd8d2f40a21dcecadd99095d37136c5c755/contract/plugin-manifest.schema.json
 # Jellyfin, as a first-party lemonfiber plugin (ADR-0041, ADR-0042).
 #
 # Contract: https://github.com/lemonfiber/spec/blob/main/20-architecture/contracts/plugin-manifest.md
@@ -61,6 +61,7 @@ listens     = 8080
 speaks      = ["media.serve@1", "identity.source@1"]
 fronts      = "jellyfin"
 provides    = ["media.serve", "identity.source"]
+media_types = ["movies", "tv"]
 
 [[proof]]
 id      = "jellyfin.identifies"
