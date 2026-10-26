@@ -115,7 +115,7 @@ fn shortening_an_error_body_uses_no_character_a_terminal_might_not_have() {
 #[test]
 fn a_service_still_starting_is_not_answering_rather_than_refusing() {
     let endpoint = Endpoint::new(
-        Fake::scripted(Vec::new()),
+        Fake::in_turn(Vec::new()),
         "http://jellyfin:8096",
         "jellyfin",
     );
