@@ -350,7 +350,7 @@ jobs:
     if: needs.pin.outputs.head != ''
     permissions:
       contents: read
-    uses: lemonfiber/spec/.github/workflows/rolling-pull-request.yml@f19777c73feb01457787e5c4dd92eee17bc1feda # v1.0.116
+    uses: lemonfiber/spec/.github/workflows/rolling-pull-request.yml@7b36656d19ab0940cc9fb197a76d8a7bc72bcf49 # v1.0.117
     with:
       branch: ${{ needs.pin.outputs.branch }}
       head: ${{ needs.pin.outputs.head }}
