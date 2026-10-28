@@ -1,5 +1,6 @@
 use super::{reader, SIGNED_IN};
 use lemonfiber_contract::capabilities::media::serve;
+use lemonfiber_contract::wire;
 use lemonfiber_fixtures::http::{Answer, Fake};
 use lemonfiber_ports::http::Method;
 use lemonfiber_ports::service::{Failure, SeriesHeld, Upkeep};
@@ -31,9 +32,10 @@ async fn a_series_whose_seasons_lost_their_key_answers_its_episodes_by_where_the
         Answer::reply(200, FILED_UNDER),
     ]);
     let answered = serve::dispatch(&reader(&fake), "series_held", br#"{"most":50}"#).await;
-    let held: Option<Vec<SeriesHeld>> = answered
-        .ok()
-        .and_then(|body| serde_json::from_slice(&body).ok());
+    let held: Option<Vec<SeriesHeld>> = answered.ok().and_then(|answer| match answer {
+        wire::Answer::Json(body) => serde_json::from_slice(&body).ok(),
+        wire::Answer::Reset => None,
+    });
     assert_eq!(
         held,
         Some(vec![
@@ -127,7 +129,7 @@ async fn a_refresh_reads_the_series_and_everything_under_it_again_and_keeps_edit
         format!(r#"{{"id":"{BROKEN}"}}"#).as_bytes(),
     )
     .await;
-    assert_eq!(answered.ok().as_deref(), Some(&b"null"[..]));
+    assert_eq!(answered.ok(), Some(wire::Answer::Json(b"null".to_vec())));
     assert_eq!(
         asked(&fake),
         vec![(

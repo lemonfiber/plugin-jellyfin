@@ -14,6 +14,7 @@ use crate::endpoint::Endpoint;
 mod configured;
 mod cors;
 mod declared;
+mod encrypting;
 mod household;
 mod item;
 mod keys;
@@ -37,6 +38,8 @@ const AUTHORIZATION_HEADER: &str = "Authorization";
 
 const PUBLIC_INFO: &str = "/System/Info/Public";
 
+const STARTED: &str = "StartupWizardCompleted";
+
 fn carrying(token: &str) -> String {
     format!(r#"MediaBrowser Token="{token}""#)
 }
@@ -55,25 +58,45 @@ pub struct Jellyfin {
     endpoint: Endpoint,
     held: Arc<dyn Holding>,
     sessions: Sessions,
+    internal_tls: Option<lemonfiber_pinned::Https>,
 }
 
 impl Jellyfin {
     /// The Jellyfin reached at `base` over `http`, signed in to with what `held` supplies.
     #[must_use]
     pub fn new(http: Arc<dyn Http>, base: impl Into<String>, held: Arc<dyn Holding>) -> Self {
+        let base = base.into();
         Self {
+            internal_tls: encrypting::internal_tls(&base),
             endpoint: Endpoint::new(http, base, SERVICE),
             held,
             sessions: Sessions::default(),
         }
     }
 
-    /// Whether Jellyfin answers its public information.
+    /// The same, reaching Jellyfin's internal TLS port at `at` in place of its own host at
+    /// the port it declares.
+    #[must_use]
+    pub fn with_internal_tls(self, at: lemonfiber_pinned::Https) -> Self {
+        Self {
+            internal_tls: Some(at),
+            ..self
+        }
+    }
+
+    /// Whether Jellyfin itself answers its public information, saying whether its first
+    /// run is done. The server Jellyfin answers with while it is still starting says
+    /// neither, and is not taken for it.
     pub async fn answers(&self) -> bool {
         self.endpoint
             .send(&self.request(Method::Get, PUBLIC_INFO, None))
             .await
-            .is_ok_and(|response| response.is_success())
+            .is_ok_and(|response| {
+                response.is_success()
+                    && serde_json::from_str::<serde_json::Value>(&response.body).is_ok_and(|info| {
+                        info.get(STARTED).is_some_and(serde_json::Value::is_boolean)
+                    })
+            })
     }
 
     fn request(&self, method: Method, path: &str, body: Option<String>) -> Request {

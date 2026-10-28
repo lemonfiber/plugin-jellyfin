@@ -140,7 +140,17 @@ async fn it_is_ready_while_jellyfin_answers_its_public_information() {
         .requests()
         .iter()
         .all(|asked| asked.url == "http://jellyfin:8096/System/Info/Public"));
-    for down in [Fake::silent(), Fake::always(Answer::reply(503, ""))] {
+    let starting = r#"{"localAddress":"http://10.0.0.2:8096","serverName":"nas","version":"10.11.11","productName":"Jellyfin Server","operatingSystem":"","id":"650504d5"}"#;
+    for down in [
+        Fake::silent(),
+        Fake::always(Answer::reply(
+            503,
+            "Jellyfin Server is loading. Please try again shortly.",
+        )),
+        Fake::always(Answer::reply(200, starting)),
+        Fake::always(Answer::reply(200, r#"{"StartupWizardCompleted":"yes"}"#)),
+        Fake::always(Answer::reply(200, "not json")),
+    ] {
         let (status, body) = answered_by(&down, "GET", &ready_path(), Some(&key), "").await;
         assert_eq!(
             (status, body.as_slice()),
