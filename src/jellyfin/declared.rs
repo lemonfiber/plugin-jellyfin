@@ -12,6 +12,8 @@ const PORT: u16 = 8096;
 
 const GUARDED: u16 = 8920;
 
+pub(super) const INTERNAL_TLS: u16 = 8920;
+
 const PREFIXED: &str = "(?i)^(?:/emby|/mediabrowser)?";
 
 const ITEM_SEGMENT: &str = "(?P<item>[^/]+)";
@@ -123,6 +125,7 @@ fn declared() -> Declared {
         ports: Ports {
             upstream: PORT,
             encrypted: Some(GUARDED),
+            internal_tls: Some(INTERNAL_TLS),
         },
     }
 }
