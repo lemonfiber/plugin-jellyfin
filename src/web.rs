@@ -25,7 +25,7 @@ impl Web {
     ///
     /// The error building the client.
     pub fn new() -> Result<Self, reqwest::Error> {
-        reqwest::Client::builder()
+        lemonfiber_adapter_kit::web::client_builder()
             .redirect(reqwest::redirect::Policy::none())
             .connect_timeout(CONNECT_TIMEOUT)
             .timeout(REQUEST_TIMEOUT)
