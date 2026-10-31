@@ -16,11 +16,11 @@ path = "src/main.rs"
 [dependencies]
 async-trait = "0.1"
 form_urlencoded = "1"
-lemonfiber-adapter-kit = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9" }
-lemonfiber-contract = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9" }
-lemonfiber-error = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9" }
-lemonfiber-pinned = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9" }
-lemonfiber-ports = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9" }
+lemonfiber-adapter-kit = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0" }
+lemonfiber-contract = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0" }
+lemonfiber-error = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0" }
+lemonfiber-pinned = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0" }
+lemonfiber-ports = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0" }
 reqwest = { version = "0.13", default-features = false }
 ring = "0.17"
 serde = { version = "1", features = ["derive"] }
@@ -28,11 +28,11 @@ serde_json = "1"
 tokio = { version = "1", features = ["fs", "macros", "net", "rt-multi-thread", "signal", "time"] }
 
 [dev-dependencies]
-lemonfiber-pinned = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9", features = ["test-support"] }
+lemonfiber-pinned = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0", features = ["test-support"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
 tower = { version = "0.5", default-features = false, features = ["util"] }
-lemonfiber-fixtures = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9" }
-lemonfiber-plugin = { git = "https://github.com/lemonfiber/lemonfiber", rev = "bf77a09ac361be31a290c9b916f6d68d7937c3c9" }
+lemonfiber-fixtures = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0" }
+lemonfiber-plugin = { git = "https://github.com/lemonfiber/lemonfiber", rev = "f1613877bd9141210c49dfa168830343c811a0e0" }
 regex = "1"
 toml = "1.1"
 
