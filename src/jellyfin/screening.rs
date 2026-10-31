@@ -3,7 +3,8 @@ use async_trait::async_trait;
 use super::item::ItemResource;
 use super::Jellyfin;
 use crate::endpoint::form_encoded;
-use crate::shape::{a_device, a_picture, an_id, Id};
+use crate::shape::{a_device, an_id, Id};
+use lemonfiber_adapter_kit::picture;
 use lemonfiber_ports::http::{Method, Request};
 use lemonfiber_ports::service::{
     EpisodeDetail, Failure, HowFar, Image, Item, ItemDetail, ItemProgress, Picture, Playback,
@@ -233,14 +234,10 @@ async fn pictured(
             .endpoint
             .refused("the media server would not answer the picture"));
     }
-    let Some(media_type) = fetched
-        .header("content-type")
-        .filter(|kind| a_picture(kind))
-    else {
-        return Ok(None);
-    };
-    let media_type = media_type.to_owned();
-    Ok(fetched.bytes.map(|bytes| Image { media_type, bytes }))
+    let served = fetched.header("content-type").map(str::to_owned);
+    Ok(fetched
+        .bytes
+        .and_then(|bytes| picture::image(served.as_deref(), bytes)))
 }
 
 fn as_device(jellyfin: &Jellyfin, path: &str, body: Option<String>, device: &str) -> Request {
