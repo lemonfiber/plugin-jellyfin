@@ -21,7 +21,7 @@ async fn a_poster_the_member_may_see_is_answered_with_its_media_type() {
         (
             Method::Get,
             "/Images/Primary",
-            Answer::served(200, "image/jpeg", "jpeg-bytes"),
+            Answer::served(200, "image/gif", "GIF89a-bytes"),
         ),
         (Method::Get, "/Items/", Answer::reply(200, THE_FILM)),
     ]);
@@ -32,7 +32,7 @@ async fn a_poster_the_member_may_see_is_answered_with_its_media_type() {
         .flatten();
     assert_eq!(
         image.map(|image| (image.media_type, image.bytes)),
-        Some(("image/jpeg".to_owned(), b"jpeg-bytes".to_vec()))
+        Some(("image/gif".to_owned(), b"GIF89a-bytes".to_vec()))
     );
 }
 
@@ -107,7 +107,13 @@ async fn a_picture_nothing_answers_is_unavailable() {
 
 #[tokio::test]
 async fn an_answer_that_is_not_an_image_or_is_svg_is_no_picture() {
-    for served in ["text/html", "image/svg+xml", "application/json"] {
+    for served in [
+        "text/html",
+        "image/svg+xml",
+        "application/json",
+        "image/png",
+        "image/gif",
+    ] {
         let fake = Fake::in_turn(vec![
             Answer::reply(200, SIGNED_IN),
             Answer::reply(200, THE_FILM),

@@ -51,19 +51,5 @@ pub fn a_key(key: &str) -> bool {
         && key.chars().all(|letter| letter.is_ascii_alphanumeric())
 }
 
-/// Whether `media_type` names an image type other than SVG.
-#[must_use]
-pub fn a_picture(media_type: &str) -> bool {
-    let essence = media_type
-        .split(';')
-        .next()
-        .unwrap_or_default()
-        .trim()
-        .to_ascii_lowercase();
-    essence
-        .strip_prefix("image/")
-        .is_some_and(|subtype| !subtype.is_empty() && !subtype.starts_with("svg"))
-}
-
 #[cfg(test)]
 mod tests;
