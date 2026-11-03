@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 use lemonfiber_ports::http::Method;
-use lemonfiber_ports::service::{Dated, Failure};
+use lemonfiber_ports::service::{Astray, Dated, Failure};
 
 use super::{carrying, Jellyfin, AUTHORIZATION_HEADER};
 use crate::endpoint::form_encoded;
@@ -26,6 +26,11 @@ pub(super) async fn dated(jellyfin: &Jellyfin, app: &str) -> Result<Vec<Dated>, 
             last_used: key.last_used,
         })
         .collect())
+}
+
+pub(super) async fn astray(jellyfin: &Jellyfin, app: &str) -> Result<Vec<Astray>, Failure> {
+    listed(jellyfin, app).await?;
+    Ok(Vec::new())
 }
 
 async fn listed(jellyfin: &Jellyfin, app: &str) -> Result<Vec<Key>, Failure> {

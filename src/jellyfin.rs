@@ -15,6 +15,7 @@ mod configured;
 mod cors;
 mod declared;
 mod encrypting;
+mod furnishing;
 mod household;
 mod item;
 mod keys;

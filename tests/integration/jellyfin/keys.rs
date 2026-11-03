@@ -198,3 +198,28 @@ async fn a_key_is_proved_by_reading_with_it_alone() {
         Err(Failure::Unauthorised { .. })
     ));
 }
+
+#[tokio::test]
+async fn every_key_under_a_name_is_one_the_core_reads_so_none_is_astray() {
+    let fake = Fake::in_turn(vec![
+        Answer::reply(200, SIGNED_IN),
+        Answer::reply(200, OURS_TOO),
+    ]);
+    assert_eq!(
+        reader(&fake).astray("lemonfiber").await.ok(),
+        Some(Vec::new())
+    );
+    assert!(fake
+        .requests()
+        .iter()
+        .any(|asked| asked.method == Method::Get && asked.url.ends_with("/Auth/Keys")));
+}
+
+#[tokio::test]
+async fn a_key_list_that_cannot_be_read_is_no_answer_of_what_is_astray() {
+    let fake = Fake::in_turn(vec![
+        Answer::reply(200, SIGNED_IN),
+        Answer::reply(200, "not json"),
+    ]);
+    assert!(reader(&fake).astray("lemonfiber").await.is_err());
+}

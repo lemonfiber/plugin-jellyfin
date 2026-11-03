@@ -1,4 +1,4 @@
-#:schema https://raw.githubusercontent.com/lemonfiber/lemonfiber/f1613877bd9141210c49dfa168830343c811a0e0/contract/plugin-manifest.schema.json
+#:schema https://raw.githubusercontent.com/lemonfiber/lemonfiber/fdda4b122819d77dd79abacc0f34b577363c45ed/contract/plugin-manifest.schema.json
 # Jellyfin, as a first-party lemonfiber plugin (ADR-0041, ADR-0042).
 #
 # Contract: https://github.com/lemonfiber/spec/blob/main/20-architecture/contracts/plugin-manifest.md
@@ -37,6 +37,7 @@ memory_mib  = 600
 reaches     = "metadata providers and its own plugin repository"
 asks_for    = "Reads artwork and descriptions for what is in your library, and checks its plugin repository for updates unless you turn that off in its own settings."
 takes_data  = true
+media_types = ["movies", "tv"]
 config_path = "/config"
 listens     = 8096
 user_mode   = "uid"
