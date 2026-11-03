@@ -68,6 +68,7 @@ mod accounts;
 mod cors;
 mod declaring;
 mod encrypting;
+mod furnishing;
 mod keys;
 mod library;
 mod pictures;
