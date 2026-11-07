@@ -94,6 +94,14 @@ impl Endpoint {
         }
     }
 
+    /// What the service does not offer at all, for `detail`.
+    pub fn unsupported(&self, detail: &str) -> Failure {
+        Failure::Unsupported {
+            service: self.service.clone(),
+            detail: detail.to_owned(),
+        }
+    }
+
     /// An answer that arrived and could not be used, for `detail`.
     pub fn refused(&self, detail: &str) -> Failure {
         Failure::Refused {

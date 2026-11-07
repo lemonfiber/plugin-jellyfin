@@ -223,3 +223,20 @@ async fn a_key_list_that_cannot_be_read_is_no_answer_of_what_is_astray() {
     ]);
     assert!(reader(&fake).astray("lemonfiber").await.is_err());
 }
+
+#[tokio::test]
+async fn no_outside_service_holds_its_accounts_so_none_is_asked() {
+    let fake = Fake::in_turn(Vec::new());
+    let jellyfin = reader(&fake);
+
+    for answered in [
+        jellyfin.account("lemonfiber").await.err(),
+        jellyfin.listed_as().await.err(),
+    ] {
+        assert!(
+            matches!(answered, Some(Failure::Unsupported { ref detail, .. }) if detail.contains("holds its own accounts")),
+            "{answered:?}"
+        );
+    }
+    assert!(fake.requests().is_empty());
+}
