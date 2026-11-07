@@ -1,7 +1,9 @@
 use async_trait::async_trait;
 
 use super::{cors, keys, proxies, Jellyfin};
-use lemonfiber_ports::service::{AppKeys, Astray, Dated, Failure, Fronted};
+use lemonfiber_ports::service::{
+    AppKeys, Astray, Dated, Failure, Fronted, OutsideAccount, OutsideServer,
+};
 
 #[async_trait]
 impl Fronted for Jellyfin {
@@ -50,5 +52,13 @@ impl AppKeys for Jellyfin {
 
     async fn astray(&self, app: &str) -> Result<Vec<Astray>, Failure> {
         keys::astray(self, app).await
+    }
+
+    async fn account(&self, _app: &str) -> Result<OutsideAccount, Failure> {
+        Err(keys::held_itself(self))
+    }
+
+    async fn listed_as(&self) -> Result<OutsideServer, Failure> {
+        Err(keys::held_itself(self))
     }
 }

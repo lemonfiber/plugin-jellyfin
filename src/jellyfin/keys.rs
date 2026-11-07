@@ -28,6 +28,15 @@ pub(super) async fn dated(jellyfin: &Jellyfin, app: &str) -> Result<Vec<Dated>, 
         .collect())
 }
 
+/// Why Jellyfin answers no account or listing of an outside service: it holds its accounts
+/// itself.
+const HELD_ITSELF: &str = "Jellyfin holds its own accounts, so no outside service lists it";
+
+/// Jellyfin's answer to an ask of the outside service that holds its accounts: none does.
+pub(super) fn held_itself(jellyfin: &Jellyfin) -> Failure {
+    jellyfin.endpoint.unsupported(HELD_ITSELF)
+}
+
 pub(super) async fn astray(jellyfin: &Jellyfin, app: &str) -> Result<Vec<Astray>, Failure> {
     listed(jellyfin, app).await?;
     Ok(Vec::new())
