@@ -15,12 +15,14 @@ fn no_arguments_serve_the_stack_s_defaults() {
 fn each_flag_sets_its_one_setting() {
     assert_eq!(
         asked(words(
-            "--listen 127.0.0.1:9 --upstream http://127.0.0.1:8096 --configuration /tmp/here"
+            "--listen 127.0.0.1:9 --upstream http://127.0.0.1:8096 --configuration /tmp/here \
+             --reached-at http://adapter:9"
         )),
         Ok(Asked::Serve(Settings {
             listen: "127.0.0.1:9".to_owned(),
             upstream: "http://127.0.0.1:8096".to_owned(),
             configuration: PathBuf::from("/tmp/here"),
+            reached_at: "http://adapter:9".to_owned(),
         }))
     );
 }
