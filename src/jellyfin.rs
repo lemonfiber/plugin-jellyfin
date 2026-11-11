@@ -21,6 +21,7 @@ mod item;
 mod keys;
 mod library;
 mod proxies;
+mod recounting;
 mod screening;
 mod serving;
 mod sessions;
