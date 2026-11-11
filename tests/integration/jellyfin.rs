@@ -76,6 +76,7 @@ mod playing;
 mod policies;
 mod proxies;
 mod reads;
+mod recounting;
 mod screening;
 mod sessions;
 mod setting_up;
