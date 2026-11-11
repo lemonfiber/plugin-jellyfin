@@ -1,12 +1,15 @@
 //! What this adapter says it is, and the kit that serves its contracts.
 
+use std::path::Path;
 use std::sync::Arc;
 
+use lemonfiber_adapter_kit::recounting::{History, Recounter};
 use lemonfiber_adapter_kit::{Kit, Readiness};
 use lemonfiber_contract::adapter::{About, Release};
 use lemonfiber_contract::capabilities::{identity, media};
+use lemonfiber_ports::narration::Narrator;
 
-use crate::jellyfin::Jellyfin;
+use crate::jellyfin::{Happenings, Jellyfin};
 
 /// The upstream this adapter fronts, as its project names itself.
 pub const UPSTREAM: &str = "Jellyfin";
@@ -36,13 +39,40 @@ pub fn about() -> About {
 /// Both contracts, served from `jellyfin` under `key`, ready while Jellyfin answers.
 #[must_use]
 pub fn kit(key: String, jellyfin: Arc<Jellyfin>) -> Kit {
+    serving(Kit::new(key, about()), jellyfin)
+}
+
+/// Both contracts, served from `jellyfin` under `key`, telling the core what happened
+/// with its cursor kept beneath `configuration` and what it says said to `narrator`,
+/// and pushed to by Jellyfin at `reached_at` where its Webhook plugin is installed.
+#[must_use]
+pub fn recounting_kit(
+    key: String,
+    jellyfin: Arc<Jellyfin>,
+    configuration: &Path,
+    reached_at: &str,
+    narrator: Arc<dyn Narrator>,
+) -> Kit {
+    let happenings = Arc::new(Happenings(Arc::downgrade(&jellyfin)));
+    let recounter = Recounter::new(
+        UPSTREAM,
+        configuration,
+        Arc::clone(&happenings) as Arc<dyn History>,
+        narrator,
+    )
+    .pushed_through(happenings, reached_at);
+    jellyfin.recounted_by(recounter.clone());
+    serving(Kit::new(key, about()).recounted_by(recounter), jellyfin)
+}
+
+/// `kit` ready while Jellyfin answers, serving both contracts from `jellyfin`.
+fn serving(kit: Kit, jellyfin: Arc<Jellyfin>) -> Kit {
     let asked = Arc::clone(&jellyfin);
     let ready: Readiness = Arc::new(move || {
         let asked = Arc::clone(&asked);
         Box::pin(async move { asked.answers().await })
     });
-    Kit::new(key, about())
-        .ready_when(ready)
+    kit.ready_when(ready)
         .serving(media::serve::served(Arc::clone(&jellyfin)))
         .serving(identity::source::served(jellyfin))
 }
