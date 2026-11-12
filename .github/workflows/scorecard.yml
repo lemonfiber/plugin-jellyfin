@@ -16,4 +16,4 @@ jobs:
       actions: read
     secrets:
       SCORECARD_TOKEN: ${{ secrets.SCORECARD_TOKEN }}
-    uses: lemonfiber/spec/.github/workflows/scorecard.yml@f83b90592c5a03cf179102f3c08ba20b282a6818 # v1.0.143
+    uses: lemonfiber/spec/.github/workflows/scorecard.yml@1fcd8228494a546f53a3ffa36e5a6dba79e71b68 # v1.0.145
