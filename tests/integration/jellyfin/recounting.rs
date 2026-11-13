@@ -287,3 +287,94 @@ async fn the_recounting_kit_answers_events_through_its_recounter() {
         .await;
     assert!(matches!(partial, Err(Failure::Disallowed { .. })));
 }
+
+fn page_of(entries: impl Iterator<Item = String>) -> String {
+    format!(r#"{{"Items":[{}]}}"#, entries.collect::<Vec<_>>().join(","))
+}
+
+fn item_at(number: u32) -> String {
+    format!(
+        r#"{{"Id":"i{number}","Name":"Title {number}","DateCreated":"2026-11-12T{:02}:{:02}:00Z"}}"#,
+        number / 60,
+        number % 60
+    )
+}
+
+fn entry_at(id: u32) -> String {
+    format!(
+        r#"{{"Id":{id},"Name":"Signed in","Date":"2026-11-11T11:00:00Z","Severity":"Information"}}"#
+    )
+}
+
+#[tokio::test]
+async fn a_full_page_of_newer_items_and_entries_reads_on_to_the_next() {
+    let cursor_item = r#"{"Id":"a0","Name":"Dune","DateCreated":"2026-11-11T10:00:00Z"}"#;
+    let fake = Fake::by_path(vec![
+        ("/Users/AuthenticateByName", Answer::reply(200, SIGNED_IN)),
+        (
+            "StartIndex=0&",
+            Answer::reply(200, page_of((2..=101).rev().map(item_at))),
+        ),
+        (
+            "StartIndex=100&",
+            Answer::reply(
+                200,
+                page_of([item_at(1), cursor_item.to_owned()].into_iter()),
+            ),
+        ),
+        (
+            "startIndex=0&limit=1&",
+            Answer::reply(200, page_of(std::iter::once(entry_at(300)))),
+        ),
+        (
+            "startIndex=0&",
+            Answer::reply(200, page_of((201..=300).rev().map(entry_at))),
+        ),
+        (
+            "startIndex=100&",
+            Answer::reply(200, page_of([200, 199].into_iter().map(entry_at))),
+        ),
+    ]);
+    let jellyfin = read_from(&fake);
+    let after = heard(&jellyfin)
+        .after("2026-11-11T10:00:00.0000000Z|a0|199")
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+    let told: Vec<Option<String>> = after
+        .iter()
+        .filter_map(|entry| entry.event.as_ref())
+        .map(|event| event.reference.clone())
+        .collect();
+    let added: Vec<Option<String>> = (1..=101).map(|number| Some(format!("i{number}"))).collect();
+    assert_eq!(told, added);
+    assert_eq!(after.len(), 202);
+    assert_eq!(
+        after.last().map(|entry| entry.position.as_str()),
+        Some("2026-11-12T01:41:00.0000000Z|i101|300")
+    );
+}
+
+#[tokio::test]
+async fn a_webhook_configuration_that_is_not_an_object_is_refused_and_left_alone() {
+    let fake = Fake::by_route(vec![
+        (
+            Method::Post,
+            "/Users/AuthenticateByName",
+            Answer::reply(200, SIGNED_IN),
+        ),
+        (Method::Get, CONFIGURATION, Answer::reply(200, "[]")),
+        (Method::Get, "/Plugins", Answer::reply(200, ACTIVE_WEBHOOK)),
+    ]);
+    let jellyfin = read_from(&fake);
+    let said = heard(&jellyfin).connected("http://adapter/events/s").await;
+    assert!(
+        matches!(&said, Err(Failure::Refused { service, .. }) if service == "jellyfin"),
+        "{said:?}"
+    );
+    assert!(!fake
+        .requests()
+        .iter()
+        .any(|request| request.method == Method::Post && request.url.ends_with(CONFIGURATION)));
+}
