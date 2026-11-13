@@ -10,6 +10,8 @@
 
 requirement = [
   { id = "ARCH-R206", state = "done", evidence = ["src/jellyfin/declared.rs", "tests/integration/jellyfin/declaring.rs::the_declaration_is_one_a_guard_can_enforce", "conformance/media.serve@1/declared-answers.json"] },
+  { id = "ARCH-R411", state = "partial", evidence = ["src/jellyfin/recounting.rs", "src/adapter.rs", "tests/integration/jellyfin/recounting.rs::with_the_webhook_plugin_running_its_one_destination_points_at_the_adapter_alone", "tests/integration/jellyfin/recounting.rs::without_the_webhook_plugin_running_jellyfin_cannot_push_and_nothing_is_changed", "conformance/media.serve@1/events-answers.json"] },
+  { id = "ARCH-R412", state = "partial", evidence = ["src/jellyfin/recounting.rs", "tests/integration/jellyfin/recounting.rs::what_followed_the_cursor_comes_oldest_first_each_with_where_it_stands", "tests/integration/jellyfin/recounting.rs::a_cursor_jellyfin_no_longer_holds_or_cannot_be_read_is_not_held"] },
   { id = "F14-R6", state = "partial", evidence = ["src/adapter.rs", "src/adapter/tests.rs::it_speaks_both_contracts_and_names_the_release_its_recordings_were_taken_from"] },
   { id = "F14-R15", state = "partial", evidence = ["Cargo.toml", "Dockerfile", ".github/workflows/release.yml"] },
   { id = "F14-R27", state = "partial", evidence = ["Dockerfile", ".github/workflows/adapter.yml"] },

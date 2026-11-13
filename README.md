@@ -52,10 +52,37 @@ stays on disk, and Jellyfin builds its cache again in the new one.
   `config/jellyfin-adapter/upstream.json` as `{"username", "password"}`, from
   the password it minted for this server. The adapter reads it for every sign-in,
   never writes it, and never puts any of it in a log or an answer.
+- **The key it tells lemonfiber what happened with**, which lemonfiber mints and
+  writes to `config/jellyfin-adapter/events.key` each time it wires the stack.
+- **Its cursor**, in `config/jellyfin-adapter/events.json`: where lemonfiber is
+  told to send, the newest item and activity entry already sent, and the secret
+  path Jellyfin pushes at where it pushes.
 
-Both files are owner-only. lemonfiber runs the adapter as the operator's uid, so
+Every one of these files is owner-only. lemonfiber runs the adapter as the operator's uid, so
 the adapter can read them; the image's own user cannot. The image is distroless,
 non-root, with no shell and no package manager.
+
+## How it tells lemonfiber what happened
+
+Asked by lemonfiber's `events`, the adapter tells it each film or episode Jellyfin
+adds to a library, and each problem Jellyfin logs about itself at a warning or an
+error. An entry about a sign-in, an account, a session, playback, or a subtitle or
+lyric download for a title is read past and never told, whatever its level, so a
+name typed at the sign-in page never leaves Jellyfin. It never tells what anybody
+watches.
+
+- **Where Jellyfin's Webhook plugin is installed and running,** the adapter keeps
+  one generic destination in it, named `lemonfiber`, posting on `ItemAdded`
+  alone to `http://jellyfin-adapter:8080/events/<secret>`. A post there only
+  makes the adapter read Jellyfin's items and activity log at once. It also
+  reads them when it starts, and once a day.
+- **Otherwise,** it reads them every interval lemonfiber asks
+  (`LEMONFIBER_EVENTS_POLL`, 60 seconds where unset).
+
+The adapter never installs the Webhook plugin. The first ask sends nothing older
+than that moment, and a stop drops the cursor and removes the destination.
+`--reached-at` names where Jellyfin reaches the adapter, if not at
+`http://jellyfin-adapter:8080`.
 
 ## What it needs
 
