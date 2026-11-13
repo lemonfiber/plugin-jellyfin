@@ -151,6 +151,10 @@ async fn every_pattern_and_shape_the_declaration_holds_compiles() {
         patterns.push(&path.item);
         patterns.extend(path.exempt.iter().map(String::as_str));
     }
+    for path in &declared.live {
+        patterns.push(&path.pattern);
+        patterns.push(&path.stream);
+    }
     patterns.push(&declared.token.shape);
     assert!(patterns
         .iter()

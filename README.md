@@ -57,6 +57,27 @@ Both files are owner-only. lemonfiber runs the adapter as the operator's uid, so
 the adapter can read them; the image's own user cannot. The image is distroless,
 non-root, with no shell and no package manager.
 
+## Live TV and the browser
+
+- **Channels.** The adapter answers a member's channels only where that member's
+  own Jellyfin account may watch live TV (`EnableLiveTvAccess`), read from the
+  account's policy. Asking Jellyfin with the administrator's session and the
+  member's id would skip that switch. Each channel comes with the programme on
+  it now and that programme's certificate, so lemonfiber can hold it to the
+  member's limits.
+- **Tuning.** A channel is opened as a live stream on the member's account. The
+  answer gives the id it is closed by, the path of Jellyfin's own buffer of the
+  tuner (`/LiveTv/LiveStreamFiles/<id>/stream.<ext>`), and an HLS master
+  playlist that names the live stream in `LiveStreamId`. Where Jellyfin streams
+  straight from the tuner and keeps no buffer of its own, the stream is closed
+  and the request refused.
+- **The guard.** The declaration has a live-stream path on the buffer. It has
+  another on the transcoding routes, which reads the live stream from
+  `LiveStreamId`. Every byte path still refuses `LiveStreamId` on any other
+  route.
+- **The browser.** An item plays in a browser from an HLS master playlist with
+  H.264 video, stereo AAC audio and fMP4 segments.
+
 ## What it needs
 
 - A lemonfiber that installs plugins whose services speak contracts.
