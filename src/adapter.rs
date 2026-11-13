@@ -9,7 +9,7 @@ use lemonfiber_contract::adapter::{About, Release};
 use lemonfiber_contract::capabilities::{identity, media};
 use lemonfiber_ports::narration::Narrator;
 
-use crate::jellyfin::{Happenings, Jellyfin};
+use crate::jellyfin::{Happenings, Jellyfin, SERVICE};
 
 /// The upstream this adapter fronts, as its project names itself.
 pub const UPSTREAM: &str = "Jellyfin";
@@ -55,7 +55,7 @@ pub fn recounting_kit(
 ) -> Kit {
     let happenings = Arc::new(Happenings(Arc::downgrade(&jellyfin)));
     let recounter = Recounter::new(
-        UPSTREAM,
+        SERVICE,
         configuration,
         Arc::clone(&happenings) as Arc<dyn History>,
         narrator,

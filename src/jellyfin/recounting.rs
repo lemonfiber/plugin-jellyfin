@@ -31,6 +31,18 @@ const PAGE: usize = 100;
 /// The levels an activity entry is told at.
 const RAISED: [&str; 3] = ["Warning", "Error", "Critical"];
 
+/// The starts of the activity types that name an account or a title, read but never told.
+const PERSONAL: [&str; 8] = [
+    "Authentication",
+    "User",
+    "Session",
+    "Video",
+    "Audio",
+    "Playback",
+    "LyricDownload",
+    "SubtitleDownload",
+];
+
 /// Where a plugin answers it is running.
 const ACTIVE: &str = "Active";
 
@@ -162,11 +174,14 @@ struct Activity {
     date: String,
     #[serde(rename = "Severity", default)]
     severity: String,
+    #[serde(rename = "Type", default)]
+    kind: String,
 }
 
 impl Activity {
     fn event(&self) -> Option<Event> {
-        RAISED.contains(&self.severity.as_str()).then(|| Event {
+        let personal = PERSONAL.iter().any(|start| self.kind.starts_with(start));
+        (RAISED.contains(&self.severity.as_str()) && !personal).then(|| Event {
             event: Happened::Health,
             reference: None,
             name: self.name.clone(),

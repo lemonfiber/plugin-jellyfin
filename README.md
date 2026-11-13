@@ -66,7 +66,10 @@ non-root, with no shell and no package manager.
 
 Asked by lemonfiber's `events`, the adapter tells it each film or episode Jellyfin
 adds to a library, and each problem Jellyfin logs about itself at a warning or an
-error, with no user named. It never tells what anybody watches.
+error. An entry about a sign-in, an account, a session, playback, or a subtitle or
+lyric download for a title is read past and never told, whatever its level, so a
+name typed at the sign-in page never leaves Jellyfin. It never tells what anybody
+watches.
 
 - **Where Jellyfin's Webhook plugin is installed and running,** the adapter keeps
   one generic destination in it, named `lemonfiber`, posting on `ItemAdded`
