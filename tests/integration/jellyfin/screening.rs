@@ -371,3 +371,13 @@ async fn a_title_its_seasons_and_progress_fail_where_the_server_is_gone_or_garbl
         .await
         .is_err());
 }
+
+#[tokio::test]
+async fn the_empty_id_jellyfin_answers_its_root_folder_for_is_no_title() {
+    let fake = Fake::always(Answer::reply(200, SIGNED_IN));
+    let title = reader(&fake)
+        .title(None, "00000000000000000000000000000000")
+        .await;
+    assert_eq!(title.ok(), Some(None));
+    assert!(fake.requests().is_empty());
+}

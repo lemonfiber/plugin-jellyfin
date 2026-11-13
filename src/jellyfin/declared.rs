@@ -24,13 +24,19 @@ const ITEM_ID: &str = "(?i)^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?
 
 const HEX: &str = "^[0-9a-f]{32}$";
 
+const LIVE_STREAM: &str =
+    "^[0-9a-f]{32}_[0-9a-f]{32}_(?:[0-9a-z]{1,32}_[0-9a-f]{32}_)?[0-9a-f]{32}$";
+
+const TRANSCODED_LIVE: &str =
+    "Videos/[^/]+/(?:(?:master|live)\\.m3u8|hls/[0-9a-f]{32}/[0-9a-f]{32}[0-9]+\\.(?:ts|mp4))$";
+
 const TOKEN_PARAMETERS: [&str; 2] = ["ApiKey", "api_key"];
 
 const ITEM_PARAMETER: &str = "itemId";
 
-const LIVE_STREAM_PARAMETER: &str = "LiveStreamId";
+pub(super) const LIVE_STREAM_PARAMETER: &str = "LiveStreamId";
 
-const SOURCE_PARAMETER: &str = "MediaSourceId";
+pub(super) const SOURCE_PARAMETER: &str = "MediaSourceId";
 
 const MAY: Statuses = Statuses { from: 200, to: 299 };
 
@@ -45,6 +51,9 @@ const UNKEYED: &str = "Videos/(?:ActiveEncodings|MergeVersions)$";
 const BY_NAME: &str = "(?:Artists|Genres|MusicGenres|Persons|Studios)";
 
 const STREAMED: &str = "VideoCodec=h264,hevc&AudioCodec=aac,mp3,ac3,eac3&SegmentContainer=mp4";
+
+const BROWSED: &str =
+    "VideoCodec=h264&AudioCodec=aac&TranscodingMaxAudioChannels=2&SegmentContainer=mp4";
 
 fn refusing() -> Vec<Naming> {
     [ITEM_PARAMETER, LIVE_STREAM_PARAMETER]
@@ -92,10 +101,18 @@ fn declared() -> Declared {
                 refusing(),
             ),
         ],
-        live: vec![LivePath {
-            pattern: format!("{PREFIXED}/LiveTv/LiveStreamFiles/{STREAM_SEGMENT}/stream\\."),
-            stream: HEX.to_owned(),
-        }],
+        live: vec![
+            LivePath {
+                pattern: format!("{PREFIXED}/LiveTv/LiveStreamFiles/{STREAM_SEGMENT}/stream\\."),
+                parameter: None,
+                stream: HEX.to_owned(),
+            },
+            LivePath {
+                pattern: format!("{PREFIXED}/{TRANSCODED_LIVE}"),
+                parameter: Some(LIVE_STREAM_PARAMETER.to_owned()),
+                stream: LIVE_STREAM.to_owned(),
+            },
+        ],
         refused: vec![
             format!("{PREFIXED}/{BY_NAME}/[^/]+/Images(?:/|$)"),
             format!("{PREFIXED}/Branding/Splashscreen/?$"),
@@ -124,6 +141,9 @@ fn declared() -> Declared {
             stream: format!("{BASE}/Videos/{ITEM}/master.m3u8?MediaSourceId={ITEM}&{STREAMED}"),
             poster: format!("{BASE}{}", picture_path(ITEM, Picture::Poster)),
             backdrop: format!("{BASE}{}", picture_path(ITEM, Picture::Backdrop)),
+            playlist: Some(format!(
+                "{BASE}/Videos/{ITEM}/master.m3u8?MediaSourceId={ITEM}&{BROWSED}"
+            )),
         },
         ports: Ports {
             upstream: PORT,

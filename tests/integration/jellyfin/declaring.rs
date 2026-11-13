@@ -58,17 +58,19 @@ async fn every_byte_route_is_matched_at_the_root_and_under_both_prefixes_without
 
 #[tokio::test]
 async fn a_live_streams_file_is_matched_at_the_root_and_under_both_prefixes_by_jellyfins_own_id() {
-    let live: Option<Vec<(String, String)>> = declared().await.map(|declared| {
+    let live: Option<Vec<(String, Option<String>, String)>> = declared().await.map(|declared| {
         declared
             .live
             .into_iter()
-            .map(|path| (path.pattern, path.stream))
+            .filter(|path| path.parameter.is_none())
+            .map(|path| (path.pattern, path.parameter, path.stream))
             .collect()
     });
     assert_eq!(
         live,
         Some(vec![(
             format!("{PREFIXED}/LiveTv/LiveStreamFiles/(?P<stream>[^/]+)/stream\\."),
+            None,
             "^[0-9a-f]{32}$".to_owned(),
         )])
     );
@@ -82,6 +84,7 @@ async fn a_live_streams_file_names_the_live_stream_in_its_path_and_nothing_else_
         .unwrap_or_default();
     let compiled: Vec<(regex::Regex, regex::Regex)> = live
         .iter()
+        .filter(|path| path.parameter.is_none())
         .filter_map(|path| {
             Some((
                 regex::Regex::new(&path.pattern).ok()?,
@@ -116,6 +119,63 @@ async fn a_live_streams_file_names_the_live_stream_in_its_path_and_nothing_else_
         format!("/LiveTv/LiveRecordings/{id}/stream"),
     ] {
         assert_eq!(named(&path), None, "{path}");
+    }
+}
+
+#[tokio::test]
+async fn a_transcoded_live_stream_is_named_by_live_stream_id_on_jellyfins_live_playlists_and_segments_alone(
+) {
+    let live = declared()
+        .await
+        .map(|declared| declared.live)
+        .unwrap_or_default();
+    let parameterised: Vec<_> = live
+        .iter()
+        .filter(|path| path.parameter.is_some())
+        .collect();
+    assert_eq!(parameterised.len(), 1);
+    let Some(path) = parameterised.first() else {
+        return;
+    };
+    assert_eq!(path.parameter.as_deref(), Some("LiveStreamId"));
+    let covers = |route: &str| {
+        regex::Regex::new(&format!("^(?:{})", path.pattern))
+            .is_ok_and(|pattern| pattern.is_match(route))
+    };
+    let shaped =
+        |stream: &str| regex::Regex::new(&path.stream).is_ok_and(|shape| shape.is_match(stream));
+    let id = "0123456789abcdef0123456789abcdef";
+    for route in [
+        format!("/Videos/{id}/master.m3u8"),
+        format!("/Videos/{id}/live.m3u8"),
+        format!("/emby/videos/{id}/live.m3u8"),
+        format!("/Videos/{id}/hls/{id}/{id}0.ts"),
+        format!("/Videos/{id}/hls/{id}/{id}17.mp4"),
+    ] {
+        assert!(covers(&route), "{route}");
+    }
+    for route in [
+        format!("/Videos/{id}/main.m3u8"),
+        format!("/Videos/{id}/stream"),
+        format!("/Videos/{id}/stream.ts"),
+        format!("/Videos/{id}/hls1/main/0.ts"),
+        format!("/Videos/{id}/hls/{id}/stream.m3u8"),
+        format!("/Videos/{id}/master.m3u8/x"),
+        format!("/Audio/{id}/master.m3u8"),
+        format!("/LiveTv/LiveStreamFiles/{id}/stream.ts"),
+    ] {
+        assert!(!covers(&route), "{route}");
+    }
+    assert!(shaped(&format!("{id}_{id}_{id}")));
+    assert!(shaped(&format!("{id}_{id}_native_{id}_{id}")));
+    for stream in [
+        id.to_owned(),
+        format!("{id}_{id}"),
+        format!("{id}_{id}_{}", id.to_ascii_uppercase()),
+        format!("{id}_{id}_{id}_{id}"),
+        "planted".to_owned(),
+    ] {
+        assert!(!shaped(&stream), "{stream}");
     }
 }
 
@@ -242,5 +302,16 @@ async fn an_item_is_streamed_and_pictured_where_jellyfin_serves_it_beneath_the_d
             "{base}/Items/{item}/Images/Primary".to_owned(),
             "{base}/Items/{item}/Images/Backdrop".to_owned(),
         ))
+    );
+}
+
+#[tokio::test]
+async fn a_browser_plays_an_item_from_a_playlist_of_codecs_every_browser_plays() {
+    assert_eq!(
+        declared().await.and_then(|declared| declared.locations.playlist),
+        Some(
+            "{base}/Videos/{item}/master.m3u8?MediaSourceId={item}&VideoCodec=h264&AudioCodec=aac&TranscodingMaxAudioChannels=2&SegmentContainer=mp4"
+                .to_owned()
+        )
     );
 }
