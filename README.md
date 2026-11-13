@@ -76,7 +76,10 @@ non-root, with no shell and no package manager.
   `LiveStreamId`. Every byte path still refuses `LiveStreamId` on any other
   route.
 - **The browser.** An item plays in a browser from an HLS master playlist with
-  H.264 video, stereo AAC audio and fMP4 segments.
+  H.264 video, stereo AAC audio and fMP4 segments. `allow_origins` sets
+  Jellyfin's `CorsHosts` to exactly the origins lemonfiber gives it, the front
+  door's and the console's. It never writes an empty list or a wildcard: Jellyfin
+  reads an empty list as letting every origin in.
 
 ## What it needs
 
