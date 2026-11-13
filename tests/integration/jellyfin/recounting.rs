@@ -285,7 +285,10 @@ async fn the_recounting_kit_answers_events_through_its_recounter() {
             None,
         )
         .await;
-    assert!(matches!(partial, Err(Failure::Disallowed { .. })));
+    assert!(
+        matches!(&partial, Err(Failure::Disallowed { service, .. }) if service == "jellyfin"),
+        "{partial:?}"
+    );
 }
 
 fn page_of(entries: impl Iterator<Item = String>) -> String {
@@ -377,4 +380,53 @@ async fn a_webhook_configuration_that_is_not_an_object_is_refused_and_left_alone
         .requests()
         .iter()
         .any(|request| request.method == Method::Post && request.url.ends_with(CONFIGURATION)));
+}
+
+#[tokio::test]
+async fn an_entry_naming_an_account_or_a_title_moves_the_cursor_and_tells_nothing() {
+    let entries = r#"{"Items":[
+        {"Id":46,"Name":"Subtitles failed to download from Open for Heat","Date":"2026-11-11T11:05:00Z","Severity":"Error","Type":"SubtitleDownloadFailure"},
+        {"Id":45,"Name":"anna is locked out","Date":"2026-11-11T11:04:00Z","Severity":"Error","Type":"UserLockedOut"},
+        {"Id":44,"Name":"Scheduled task Scan Media Library failed","Date":"2026-11-11T11:03:00Z","Severity":"Error","Type":"TaskFailed"},
+        {"Id":43,"Name":"Failed login try from anna","Date":"2026-11-11T11:02:00Z","Severity":"Error","Type":"AuthenticationFailed"},
+        {"Id":42,"Name":"Library scan failed","Date":"2026-11-11T11:30:00Z","Severity":"Error"}
+    ]}"#;
+    let fake = Fake::by_path(vec![
+        ("/Users/AuthenticateByName", Answer::reply(200, SIGNED_IN)),
+        ("/Items?", Answer::reply(200, NEWEST_ITEM)),
+        ("/System/ActivityLog/Entries", Answer::reply(200, entries)),
+    ]);
+    let jellyfin = read_from(&fake);
+    let after = heard(&jellyfin)
+        .after("2026-11-11T12:00:00.5000000Z|a3|42")
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_default();
+    let at = |entry: u64| format!("2026-11-11T12:00:00.5000000Z|a3|{entry}");
+    let told: Vec<(String, Option<String>)> = after
+        .iter()
+        .map(|entry| {
+            (
+                entry.position.clone(),
+                entry.event.as_ref().map(|event| event.name.clone()),
+            )
+        })
+        .collect();
+    assert_eq!(
+        told,
+        vec![
+            (at(43), None),
+            (
+                at(44),
+                Some("Scheduled task Scan Media Library failed".to_owned())
+            ),
+            (at(45), None),
+            (at(46), None),
+        ]
+    );
+    assert!(after
+        .iter()
+        .filter_map(|entry| entry.event.as_ref())
+        .all(|event| event.event == Happened::Health));
 }
