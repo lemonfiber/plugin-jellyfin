@@ -18,6 +18,14 @@ impl Listed {
     }
 
     pub(super) async fn only(&self, jellyfin: &Jellyfin, entry: &str) -> Result<(), Failure> {
+        self.exactly(jellyfin, &[entry.to_owned()]).await
+    }
+
+    pub(super) async fn exactly(
+        &self,
+        jellyfin: &Jellyfin,
+        entries: &[String],
+    ) -> Result<(), Failure> {
         let mut document = self.document(jellyfin).await?;
         let Some(fields) = document.as_object_mut() else {
             return Err(jellyfin.endpoint.refused(&format!(
@@ -25,15 +33,15 @@ impl Listed {
                 self.what
             )));
         };
-        fields.insert(self.field.to_owned(), serde_json::json!([entry]));
+        fields.insert(self.field.to_owned(), serde_json::json!(entries));
         let response = jellyfin
             .as_admin(Method::Post, self.document, Some(document.to_string()))
             .await?;
         jellyfin.endpoint.expect_success(&response)?;
         let kept = self.read(jellyfin).await?;
-        if kept != [entry] {
+        if kept != entries {
             return Err(jellyfin.endpoint.refused(&format!(
-                "{} was written as {entry} and reads back as {kept:?}",
+                "{} was written as {entries:?} and reads back as {kept:?}",
                 self.what
             )));
         }

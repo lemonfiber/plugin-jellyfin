@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use super::{cors, keys, proxies, Jellyfin};
 use lemonfiber_ports::service::{
-    AppKeys, Astray, Dated, Failure, Fronted, OutsideAccount, OutsideServer,
+    Allowing, AppKeys, Astray, Dated, Failure, Fronted, OutsideAccount, OutsideServer,
 };
 
 #[async_trait]
@@ -25,6 +25,13 @@ impl Fronted for Jellyfin {
 
     async fn restart(&self) -> Result<(), Failure> {
         proxies::restart(self).await
+    }
+}
+
+#[async_trait]
+impl Allowing for Jellyfin {
+    async fn allow_origins(&self, origins: &[String]) -> Result<(), Failure> {
+        cors::allow_origins(self, origins).await
     }
 }
 

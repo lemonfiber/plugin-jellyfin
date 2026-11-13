@@ -1,7 +1,7 @@
 use super::{reader, SIGNED_IN};
 use lemonfiber_fixtures::http::{Answer, Fake};
 use lemonfiber_ports::http::Method;
-use lemonfiber_ports::service::Fronted as _;
+use lemonfiber_ports::service::{Allowing as _, Fronted as _};
 
 const DOOR: &str = "http://nas.local:5055";
 
@@ -111,4 +111,79 @@ async fn a_write_the_server_refuses_is_reported() {
     ]);
 
     assert!(reader(&fake).allow_only(DOOR).await.is_err());
+}
+
+const CONSOLE: &str = "https://console.example:8443";
+
+const BOTH: &str = r#"{"ServerName":"nas","CorsHosts":["http://nas.local:5055","https://console.example:8443"],"EnableMetrics":false}"#;
+
+#[tokio::test]
+async fn exactly_the_origins_given_are_written_and_read_back() {
+    let fake = Fake::in_turn(vec![
+        Answer::reply(200, SIGNED_IN),
+        Answer::reply(200, OPEN),
+        Answer::reply(204, ""),
+        Answer::reply(200, BOTH),
+    ]);
+
+    let written = reader(&fake)
+        .allow_origins(&[DOOR.to_owned(), CONSOLE.to_owned()])
+        .await;
+
+    assert!(written.is_ok(), "{written:?}");
+    let posted: Vec<serde_json::Value> = fake
+        .requests()
+        .into_iter()
+        .filter(|asked| {
+            asked.method == Method::Post && asked.url.ends_with("/System/Configuration")
+        })
+        .filter_map(|asked| asked.body.and_then(|body| serde_json::from_str(&body).ok()))
+        .collect();
+    assert_eq!(
+        posted,
+        vec![serde_json::json!({
+            "ServerName": "nas",
+            "CorsHosts": [DOOR, CONSOLE],
+            "EnableMetrics": false
+        })]
+    );
+}
+
+#[tokio::test]
+async fn origins_that_read_back_as_fewer_are_a_failure() {
+    let fake = Fake::in_turn(vec![
+        Answer::reply(200, SIGNED_IN),
+        Answer::reply(200, OPEN),
+        Answer::reply(204, ""),
+        Answer::reply(200, CLOSED),
+    ]);
+
+    let written = reader(&fake)
+        .allow_origins(&[DOOR.to_owned(), CONSOLE.to_owned()])
+        .await;
+
+    assert!(
+        written
+            .as_ref()
+            .is_err_and(|failure| failure.to_string().contains("reads back as")),
+        "{written:?}"
+    );
+}
+
+#[tokio::test]
+async fn no_origin_or_a_list_holding_an_empty_or_wildcard_one_is_never_written() {
+    for origins in [
+        Vec::new(),
+        vec![DOOR.to_owned(), String::new()],
+        vec!["*".to_owned()],
+        vec![DOOR.to_owned(), "https://*.example".to_owned()],
+    ] {
+        let fake = Fake::in_turn(Vec::new());
+
+        assert!(
+            reader(&fake).allow_origins(&origins).await.is_err(),
+            "{origins:?}"
+        );
+        assert!(fake.requests().is_empty(), "{origins:?} reached the server");
+    }
 }
