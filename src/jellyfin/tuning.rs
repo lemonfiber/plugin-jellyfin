@@ -67,14 +67,6 @@ struct ProgrammeResource {
     ends: Option<String>,
 }
 
-#[derive(serde::Serialize)]
-struct Opening<'a> {
-    #[serde(rename = "UserId")]
-    member: &'a str,
-    #[serde(rename = "AutoOpenLiveStream")]
-    open: bool,
-}
-
 #[derive(serde::Deserialize)]
 struct OpenedResource {
     #[serde(rename = "MediaSources", default)]
@@ -212,14 +204,11 @@ impl Jellyfin {
 
     async fn opened(&self, member: Id<'_>, channel: &str) -> Result<Tuned, Failure> {
         let member = member.to_string();
-        let body = serde_json::to_string(&Opening {
-            member: &member,
-            open: true,
+        let body = serde_json::json!({
+            "UserId": member,
+            "AutoOpenLiveStream": true,
         })
-        .map_err(|why| {
-            self.endpoint
-                .refused(&format!("the channel could not be opened: {why}"))
-        })?;
+        .to_string();
         let asked = form_encoded(&[("UserId", &member)]);
         let response = self
             .as_admin(

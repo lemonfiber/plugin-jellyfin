@@ -46,6 +46,14 @@ const OPENED_AT_THE_TUNER: &str = r#"{"MediaSources":[{"Protocol":"Http","Id":"f
     "LiveStreamId":"e2329f4997b378e64ccf8fa396deb76e_af999c25a00715699361240d4c6c7a53_f928d7e0acd678b1a1f517973a4e3238"}],
     "PlaySessionId":"53f2e0e962cd4b24981599e70addaa99"}"#;
 
+const OPENED_NOTHING: &str =
+    r#"{"MediaSources":[],"PlaySessionId":"53f2e0e962cd4b24981599e70addaa99"}"#;
+
+const OPENED_WITHOUT_A_LIVE_STREAM: &str = r#"{"MediaSources":[{"Protocol":"Http","Id":"f928d7e0acd678b1a1f517973a4e3238",
+    "Path":"http://192.168.107.3:8096/LiveTv/LiveStreamFiles/15a6d5f479a34b4299268fb5e3f0bed6/stream.ts",
+    "Container":"ts","IsInfiniteStream":true,"LiveStreamId":""}],
+    "PlaySessionId":"53f2e0e962cd4b24981599e70addaa99"}"#;
+
 fn jellyfin(
     account: &'static str,
     channels: &'static str,
@@ -273,6 +281,28 @@ async fn a_channel_jellyfin_does_not_buffer_itself_is_closed_and_refused() {
         Err(Failure::Refused { .. })
     ));
     assert!(fake.asked_for(&format!("/LiveStreams/Close?liveStreamId={LIVE_STREAM}")));
+}
+
+#[tokio::test]
+async fn an_account_whose_policy_cannot_be_read_is_refused() {
+    let fake = jellyfin("<html>", CHANNELS, OPENED);
+    assert!(matches!(
+        reader(&fake).channels(MEMBER).await,
+        Err(Failure::Refused { .. })
+    ));
+    assert!(!fake.asked_for("/LiveTv/Channels"));
+}
+
+#[tokio::test]
+async fn a_channel_jellyfin_opens_no_live_stream_for_is_refused() {
+    for opened in [OPENED_NOTHING, OPENED_WITHOUT_A_LIVE_STREAM] {
+        let fake = jellyfin(MAY_WATCH, CHANNELS, opened);
+        assert!(matches!(
+            reader(&fake).tune(MEMBER, CHANNEL).await,
+            Err(Failure::Refused { .. })
+        ));
+        assert!(!fake.asked_for("/LiveStreams/Close"));
+    }
 }
 
 #[tokio::test]
