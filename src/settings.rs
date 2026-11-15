@@ -9,6 +9,9 @@ pub const LISTEN: &str = "0.0.0.0:8080";
 /// Where Jellyfin answers, by its service id and the port it listens on.
 pub const UPSTREAM: &str = "http://jellyfin:8096";
 
+/// Where Jellyfin reaches the adapter, by its service id and the port it listens on.
+pub const REACHED_AT: &str = "http://jellyfin-adapter:8080";
+
 /// Where the adapter's configuration directory is mounted.
 pub const CONFIGURATION: &str = "/config";
 
@@ -30,6 +33,8 @@ pub struct Settings {
     pub upstream: String,
     /// Its configuration directory.
     pub configuration: PathBuf,
+    /// Where Jellyfin reaches it.
+    pub reached_at: String,
 }
 
 impl Default for Settings {
@@ -38,6 +43,7 @@ impl Default for Settings {
             listen: LISTEN.to_owned(),
             upstream: UPSTREAM.to_owned(),
             configuration: PathBuf::from(CONFIGURATION),
+            reached_at: REACHED_AT.to_owned(),
         }
     }
 }
@@ -59,10 +65,11 @@ pub fn asked(arguments: impl IntoIterator<Item = String>) -> Result<Asked, Strin
             "--listen" => settings.listen = value,
             "--upstream" => settings.upstream = value,
             "--configuration" => settings.configuration = PathBuf::from(value),
+            "--reached-at" => settings.reached_at = value,
             _ => {
                 return Err(format!(
-                    "{flag} is not a flag this takes; it takes --listen, --upstream and \
-                     --configuration, after an optional `health`"
+                    "{flag} is not a flag this takes; it takes --listen, --upstream, \
+                     --configuration and --reached-at, after an optional `health`"
                 ))
             }
         }

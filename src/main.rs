@@ -42,7 +42,13 @@ async fn serve(settings: &Settings) -> Result<(), String> {
         .map_err(|why| format!("{} could not be listened on: {why}", settings.listen))?;
     eprintln!("jellyfin-adapter: answering on {}", settings.listen);
     lemonfiber_adapter_kit::serving(
-        jellyfin_adapter::adapter::kit(key, Arc::new(jellyfin)),
+        jellyfin_adapter::adapter::recounting_kit(
+            key,
+            Arc::new(jellyfin),
+            &settings.configuration,
+            &settings.reached_at,
+            Arc::new(Logged),
+        ),
         listener,
         stopped(),
     )
@@ -71,6 +77,15 @@ async fn health(settings: &Settings) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!("it answered {}", answer.status()))
+    }
+}
+
+struct Logged;
+
+#[async_trait::async_trait]
+impl lemonfiber_ports::narration::Narrator for Logged {
+    async fn say(&self, said: &str) {
+        eprintln!("jellyfin-adapter: {said}");
     }
 }
 
