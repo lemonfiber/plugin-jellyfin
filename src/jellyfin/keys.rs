@@ -108,8 +108,16 @@ struct Key {
     app_name: String,
     #[serde(rename = "AccessToken", default)]
     access_token: String,
-    #[serde(rename = "DateCreated", default)]
-    created: Option<String>,
-    #[serde(rename = "DateLastActivity", default)]
-    last_used: Option<String>,
+    #[serde(
+        rename = "DateCreated",
+        default,
+        deserialize_with = "crate::jellyfin::moment"
+    )]
+    created: Option<lemonfiber_ports::Instant>,
+    #[serde(
+        rename = "DateLastActivity",
+        default,
+        deserialize_with = "crate::jellyfin::moment"
+    )]
+    last_used: Option<lemonfiber_ports::Instant>,
 }

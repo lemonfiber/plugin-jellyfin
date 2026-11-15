@@ -96,7 +96,7 @@ fn channel_one() -> Channel {
         now: Some(Programme {
             title: "Hour 1".to_owned(),
             certificate: Some("TV-MA".to_owned()),
-            ends: Some("2026-11-13T18:00:00.0000000Z".to_owned()),
+            ends: lemonfiber_ports::Instant::from_service_text("2026-11-13T18:00:00.0000000Z"),
         }),
     }
 }

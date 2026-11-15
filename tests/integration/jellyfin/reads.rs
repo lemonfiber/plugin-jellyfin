@@ -63,7 +63,7 @@ async fn the_devices_signed_in_are_one_account_s_alone() {
             device_id: "d1".to_owned(),
             device: "TV".to_owned(),
             client: "Jellyfin Web".to_owned(),
-            last_seen: Some("2026-10-01T00:00:00Z".to_owned()),
+            last_seen: lemonfiber_ports::Instant::from_service_text("2026-10-01T00:00:00Z"),
         }])
     );
 }
@@ -135,4 +135,24 @@ async fn the_country_its_ratings_are_named_for_is_two_capital_letters_or_none() 
     }
     let refused = Fake::in_turn(vec![Answer::reply(200, SIGNED_IN), Answer::reply(500, "")]);
     assert!(reader(&refused).country().await.is_err());
+}
+
+#[tokio::test]
+async fn a_device_jellyfin_dates_never_or_in_a_way_no_instant_reads_was_seen_at_no_time() {
+    let fake = Fake::in_turn(vec![
+        Answer::reply(200, SIGNED_IN),
+        Answer::reply(
+            200,
+            r#"[{"UserId":"a7f3a7f3a7f3a7f3a7f3a7f3a7f3a7f3","DeviceId":"d1","DeviceName":"TV","Client":"Jellyfin Web","LastActivityDate":"0001-01-01T00:00:00.0000000Z"},
+                {"UserId":"a7f3a7f3a7f3a7f3a7f3a7f3a7f3a7f3","DeviceId":"d2","DeviceName":"Phone","Client":"Swiftfin","LastActivityDate":"yesterday"}]"#,
+        ),
+    ]);
+    let seen: Vec<_> = reader(&fake)
+        .sessions(ANA)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|session| session.last_seen)
+        .collect();
+    assert_eq!(seen, [None, None]);
 }

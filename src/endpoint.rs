@@ -52,6 +52,7 @@ impl Endpoint {
                 .collect(),
             body,
             pinned: None,
+            deadline: None,
         }
     }
 

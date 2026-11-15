@@ -63,8 +63,12 @@ struct ProgrammeResource {
     title: String,
     #[serde(rename = "OfficialRating", default)]
     certificate: Option<String>,
-    #[serde(rename = "EndDate", default)]
-    ends: Option<String>,
+    #[serde(
+        rename = "EndDate",
+        default,
+        deserialize_with = "crate::jellyfin::moment"
+    )]
+    ends: Option<lemonfiber_ports::Instant>,
 }
 
 #[derive(serde::Deserialize)]

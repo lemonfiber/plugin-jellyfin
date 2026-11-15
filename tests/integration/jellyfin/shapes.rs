@@ -110,20 +110,20 @@ async fn a_token_that_could_close_its_quotes_does_not_stand() {
 }
 
 #[tokio::test]
-async fn a_moment_is_asked_for_as_a_query_value_and_adds_no_parameter() {
+async fn a_moment_is_asked_for_as_the_calendar_text_jellyfin_reads() {
     let fake = Fake::in_turn(vec![
         Answer::reply(200, SIGNED_IN),
         Answer::reply(200, r#"{"Items":[]}"#),
     ]);
     assert!(reader(&fake)
-        .when_invited("2026-10-01T00:00:00Z&limit=1")
+        .when_invited(lemonfiber_ports::Instant::from_seconds(1_790_812_800))
         .await
         .is_ok());
     assert!(fake.requests().iter().any(|asked| {
         asked.method == Method::Get
-        && asked.url.ends_with(
-            "/System/ActivityLog/Entries?minDate=2026-10-01T00%3A00%3A00Z%26limit%3D1&limit=200"
-        )
+            && asked
+                .url
+                .ends_with("/System/ActivityLog/Entries?minDate=2026-10-01T00%3A00%3A00Z&limit=200")
     }));
 }
 

@@ -11,10 +11,16 @@ use lemonfiber_ports::http::Method;
 use lemonfiber_ports::media::Kind;
 use lemonfiber_ports::service::{
     Access, Allowed, Certificate, Failure, Household, Invited, Item, Medium, Member, NamedLibrary,
-    Playback, Session, Signed, Unrated,
+    Playback, Session, SignInCode, Signed, Unrated,
 };
+use lemonfiber_ports::Instant;
 
 const SESSIONS: &str = "/Sessions";
+
+/// Why no member signs in by a code another service issues: Jellyfin holds its accounts
+/// itself.
+const OWN_ACCOUNTS: &str =
+    "Jellyfin holds its accounts itself, so no outside service issues a code to sign in by";
 
 const METADATA_COUNTRY: &str = "MetadataCountryCode";
 
@@ -28,10 +34,18 @@ struct UserResource {
     has_password: bool,
     #[serde(rename = "Policy", default)]
     policy: Option<PolicyResource>,
-    #[serde(rename = "LastActivityDate", default)]
-    last_activity: Option<String>,
-    #[serde(rename = "LastLoginDate", default)]
-    last_login: Option<String>,
+    #[serde(
+        rename = "LastActivityDate",
+        default,
+        deserialize_with = "crate::jellyfin::moment"
+    )]
+    last_activity: Option<Instant>,
+    #[serde(
+        rename = "LastLoginDate",
+        default,
+        deserialize_with = "crate::jellyfin::moment"
+    )]
+    last_login: Option<Instant>,
 }
 
 #[derive(serde::Deserialize, Default)]
@@ -84,8 +98,12 @@ struct SessionResource {
     device: String,
     #[serde(rename = "Client", default)]
     client: String,
-    #[serde(rename = "LastActivityDate", default)]
-    last_activity: Option<String>,
+    #[serde(
+        rename = "LastActivityDate",
+        default,
+        deserialize_with = "crate::jellyfin::moment"
+    )]
+    last_activity: Option<Instant>,
 }
 
 #[derive(serde::Deserialize)]
@@ -120,8 +138,8 @@ struct FoldersResource {
 struct EntryResource {
     #[serde(rename = "Type", default)]
     kind: String,
-    #[serde(rename = "Date", default)]
-    date: String,
+    #[serde(rename = "Date", default, deserialize_with = "crate::jellyfin::moment")]
+    date: Option<Instant>,
     #[serde(rename = "UserId", default)]
     user: String,
 }
@@ -163,6 +181,14 @@ impl Household for Jellyfin {
         standing(self, signed).await
     }
 
+    async fn sign_in_by_code(&self, _device: &str) -> Result<SignInCode, Failure> {
+        Err(self.endpoint.unsupported(OWN_ACCOUNTS))
+    }
+
+    async fn signed_by_code(&self, _id: &str) -> Result<Option<Signed>, Failure> {
+        Err(self.endpoint.unsupported(OWN_ACCOUNTS))
+    }
+
     async fn invite(&self, name: &str) -> Result<Member, Failure> {
         let body = serde_json::json!({ "Name": name }).to_string();
         let response = self
@@ -199,8 +225,12 @@ impl Household for Jellyfin {
         self.endpoint.expect_success(&response)
     }
 
-    async fn when_invited(&self, since: &str) -> Result<Vec<Invited>, Failure> {
-        let asked = form_encoded(&[("minDate", since), ("limit", &AT_ONCE.to_string())]);
+    async fn when_invited(&self, since: Instant) -> Result<Vec<Invited>, Failure> {
+        let since = since
+            .calendar()
+            .map(|text| format!("{text}Z"))
+            .unwrap_or_default();
+        let asked = form_encoded(&[("minDate", &since), ("limit", &AT_ONCE.to_string())]);
         let path = format!("/System/ActivityLog/Entries?{asked}");
         let response = self.as_admin(Method::Get, &path, None).await?;
         let recorded: ActivityResource = self.endpoint.decode(

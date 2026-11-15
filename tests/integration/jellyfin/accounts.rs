@@ -123,15 +123,24 @@ async fn when_an_account_was_made_is_read_from_what_the_server_recorded() {
     ]);
 
     let made = reader(&fake)
-        .when_invited("2026-08-27T09:00:00Z")
+        .when_invited(lemonfiber_ports::Instant::from_seconds(1_787_821_200))
         .await
         .unwrap_or_default();
 
     assert_eq!(
         made.iter()
-            .map(|entry| (entry.member.as_str(), entry.at.as_str()))
+            .map(|entry| (entry.member.as_str(), entry.at))
             .collect::<Vec<_>>(),
-        [("1", "2026-08-29T09:00:00Z"), ("1", "2026-08-30T09:00:00Z")],
+        [
+            (
+                "1",
+                lemonfiber_ports::Instant::from_service_text("2026-08-29T09:00:00Z")
+            ),
+            (
+                "1",
+                lemonfiber_ports::Instant::from_service_text("2026-08-30T09:00:00Z")
+            ),
+        ],
         "either an account being offered was dropped, or something that is not an \
          offering was carried through"
     );
@@ -395,4 +404,22 @@ async fn a_password_the_server_will_not_take_is_a_failure() {
         .claim("ana", &hers(), "a-phone-0123")
         .await
         .is_err());
+}
+
+#[tokio::test]
+async fn no_code_signs_a_member_in_since_jellyfin_holds_its_accounts_itself() {
+    let fake = Arc::new(Fake::in_turn(Vec::new()));
+    let client = jellyfin(&fake);
+    let unsupported = |said: &Failure| matches!(said, Failure::Unsupported { detail, .. } if detail.contains("holds its accounts itself"));
+    assert!(client
+        .sign_in_by_code("phone-1")
+        .await
+        .err()
+        .is_some_and(|said| unsupported(&said)));
+    assert!(client
+        .signed_by_code("c1")
+        .await
+        .err()
+        .is_some_and(|said| unsupported(&said)));
+    assert!(fake.requests().is_empty());
 }
