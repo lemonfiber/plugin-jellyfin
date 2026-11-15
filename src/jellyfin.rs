@@ -26,6 +26,7 @@ mod screening;
 mod serving;
 mod sessions;
 mod setup;
+mod tuning;
 mod upkeep;
 
 pub use sessions::Sessions;
@@ -41,6 +42,17 @@ const AUTHORIZATION_HEADER: &str = "Authorization";
 const PUBLIC_INFO: &str = "/System/Info/Public";
 
 const STARTED: &str = "StartupWizardCompleted";
+
+/// A moment Jellyfin wrote, where it wrote one that reads as an instant: its `0001-01-01`
+/// for never, and text that names no instant, read as none.
+pub(crate) fn moment<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<lemonfiber_ports::Instant>, D::Error> {
+    Ok(Option::<String>::deserialize(deserializer)?
+        .as_deref()
+        .and_then(lemonfiber_ports::Instant::from_service_text)
+        .filter(|at| at.seconds() > 0))
+}
 
 fn carrying(token: &str) -> String {
     format!(r#"MediaBrowser Token="{token}""#)

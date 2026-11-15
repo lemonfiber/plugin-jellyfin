@@ -25,6 +25,7 @@ fn asking(url: String) -> Request {
         headers: vec![("Accept".to_owned(), "application/json".to_owned())],
         body: None,
         pinned: None,
+        deadline: None,
     }
 }
 
@@ -127,6 +128,7 @@ async fn a_body_is_sent_as_it_was_written() {
                 headers: vec![("Content-Type".to_owned(), "application/json".to_owned())],
                 body: Some(BODY.to_owned()),
                 pinned: None,
+                deadline: None,
             })
             .await
             .ok()

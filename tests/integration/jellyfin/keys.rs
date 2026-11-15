@@ -157,11 +157,11 @@ async fn every_key_filed_under_the_decline_service_s_name_is_dated() {
         dated,
         Some(vec![
             lemonfiber_ports::service::Dated {
-                created: Some("2026-10-05T00:00:00Z".to_owned()),
-                last_used: Some("2026-10-05T01:00:00Z".to_owned()),
+                created: lemonfiber_ports::Instant::from_service_text("2026-10-05T00:00:00Z"),
+                last_used: lemonfiber_ports::Instant::from_service_text("2026-10-05T01:00:00Z"),
             },
             lemonfiber_ports::service::Dated {
-                created: Some("2026-10-05T02:00:00Z".to_owned()),
+                created: lemonfiber_ports::Instant::from_service_text("2026-10-05T02:00:00Z"),
                 last_used: None,
             },
         ])
