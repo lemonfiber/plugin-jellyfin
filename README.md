@@ -85,6 +85,7 @@ non-root, with no shell and no package manager.
   Jellyfin's `CorsHosts` to exactly the origins lemonfiber gives it, the front
   door's and the console's. It never writes an empty list or a wildcard: Jellyfin
   reads an empty list as letting every origin in.
+
 ## How it tells lemonfiber what happened
 
 Asked by lemonfiber's `events`, the adapter tells it each film or episode Jellyfin
