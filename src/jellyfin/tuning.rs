@@ -110,23 +110,19 @@ struct SourceResource {
 impl Tuning for Jellyfin {
     async fn channels(&self, member: &str) -> Result<Vec<Channel>, Failure> {
         let member = self.account(member)?;
-        if !self.may_watch_live_tv(member).await? {
+        let Some(policy) = self.live_tv_policy(member).await? else {
             return Ok(Vec::new());
-        }
-        let watchable = self.watchable(member).await?;
-        let mut airing = self.airing(&watchable).await?;
-        Ok(watchable
+        };
+        Ok(self
+            .watched_now(member, &policy)
+            .await?
             .into_iter()
-            .map(|channel| Channel {
-                now: airing
-                    .iter()
-                    .position(|programme| programme.channel == channel.id)
-                    .map(|at| airing.swap_remove(at))
-                    .map(|programme| Programme {
-                        title: programme.title,
-                        certificate: certified(programme.certificate),
-                        ends: programme.ends,
-                    }),
+            .map(|(channel, now)| Channel {
+                now: now.map(|programme| Programme {
+                    title: programme.title,
+                    certificate: certified(programme.certificate),
+                    ends: programme.ends,
+                }),
                 id: channel.id,
                 name: channel.name,
                 number: channel.number.filter(|number| !number.is_empty()),
@@ -146,7 +142,12 @@ impl Tuning for Jellyfin {
         let Some(policy) = self.live_tv_policy(member).await? else {
             return Ok(Vec::new());
         };
-        let watchable = self.watchable(member).await?;
+        let watchable: Vec<ChannelResource> = self
+            .watched_now(member, &policy)
+            .await?
+            .into_iter()
+            .map(|(channel, _)| channel)
+            .collect();
         if watchable.is_empty() {
             return Ok(Vec::new());
         }
@@ -183,14 +184,14 @@ impl Tuning for Jellyfin {
         let Some(asked) = Id::of(channel) else {
             return Ok(None);
         };
-        if !self.may_watch_live_tv(member).await? {
+        let Some(policy) = self.live_tv_policy(member).await? else {
             return Ok(None);
-        }
-        let Some(channel) = self
-            .watchable(member)
+        };
+        let Some((channel, _)) = self
+            .watched_now(member, &policy)
             .await?
             .into_iter()
-            .find(|watchable| same_id(&watchable.id, &asked.to_string()))
+            .find(|(watchable, _)| same_id(&watchable.id, &asked.to_string()))
         else {
             return Ok(None);
         };
@@ -210,8 +211,34 @@ impl Jellyfin {
         Id::of(member).ok_or_else(|| self.misshapen("an account"))
     }
 
-    async fn may_watch_live_tv(&self, member: Id<'_>) -> Result<bool, Failure> {
-        Ok(self.live_tv_policy(member).await?.is_some())
+    /// Each channel `member` may watch now, with the programme on it: one whose programme
+    /// on now `policy` keeps from the account is left out, and where `policy` keeps anything
+    /// from it, so is one with nothing known to be airing.
+    async fn watched_now(
+        &self,
+        member: Id<'_>,
+        policy: &PolicyResource,
+    ) -> Result<Vec<(ChannelResource, Option<ProgrammeResource>)>, Failure> {
+        let watchable = self.watchable(member).await?;
+        if watchable.is_empty() {
+            return Ok(Vec::new());
+        }
+        let ages = self.ages(policy).await?;
+        let mut airing = self.airing(&watchable).await?;
+        Ok(watchable
+            .into_iter()
+            .filter_map(|channel| {
+                let now = airing
+                    .iter()
+                    .position(|programme| programme.channel == channel.id)
+                    .map(|at| airing.swap_remove(at));
+                let kept = match &now {
+                    Some(programme) => admitted(programme, policy, &ages),
+                    None => !restricted(policy),
+                };
+                kept.then_some((channel, now))
+            })
+            .collect())
     }
 
     async fn live_tv_policy(&self, member: Id<'_>) -> Result<Option<PolicyResource>, Failure> {
@@ -267,7 +294,7 @@ impl Jellyfin {
     ) -> Result<Vec<ProgrammeResource>, Failure> {
         self.programmes(
             channels,
-            vec![("IsAiring", true.into())],
+            vec![("IsAiring", true.into()), ("Fields", vec!["Tags"].into())],
             "what is on now could not be read",
         )
         .await
@@ -298,9 +325,6 @@ impl Jellyfin {
         asked: Vec<(&str, serde_json::Value)>,
         unread: &str,
     ) -> Result<Vec<ProgrammeResource>, Failure> {
-        if channels.is_empty() {
-            return Ok(Vec::new());
-        }
         let ids: Vec<&str> = channels.iter().map(|channel| channel.id.as_str()).collect();
         let body: serde_json::Map<String, serde_json::Value> = [
             ("ChannelIds", ids.into()),
@@ -371,6 +395,14 @@ impl Jellyfin {
 
 fn certified(certificate: Option<String>) -> Option<String> {
     certificate.filter(|rated| !rated.is_empty())
+}
+
+/// Whether `policy` keeps anything from the account: an age limit, a blocked tag, or
+/// unrated items held back.
+fn restricted(policy: &PolicyResource) -> bool {
+    policy.age_limit.is_some()
+        || !policy.blocked_tags.is_empty()
+        || !policy.unrated_blocked.is_empty()
 }
 
 fn admitted(
