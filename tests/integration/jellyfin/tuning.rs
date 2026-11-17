@@ -144,7 +144,8 @@ fn asked_for_the_guide(fake: &Fake) -> Vec<serde_json::Value> {
     sent(fake, "/LiveTv/Programs")
         .iter()
         .filter_map(|request| request.body.as_deref())
-        .filter_map(|body| serde_json::from_str(body).ok())
+        .filter_map(|body| serde_json::from_str::<serde_json::Value>(body).ok())
+        .filter(|body| body.get("IsAiring").is_none())
         .collect()
 }
 
@@ -495,17 +496,13 @@ async fn the_guide_is_read_across_the_hours_asked_from_now_once_whole_and_once_a
 }
 
 #[tokio::test]
-async fn a_programme_above_the_member_s_rating_carrying_a_blocked_tag_or_unrated_where_unrated_is_blocked_is_left_out_and_the_guide_still_ends_where_jellyfin_s_does(
+async fn a_channel_whose_programme_on_now_the_member_s_policy_keeps_from_them_is_left_out_of_the_guide_channels_and_tune(
 ) {
     let fake = guided(GUARDED);
-    assert_eq!(
-        reader(&fake).guide(MEMBER, 12).await.ok(),
-        Some(vec![Listing {
-            channel: CHANNEL.to_owned(),
-            programmes: Vec::new(),
-            until: instant("2026-11-13T20:30:00Z"),
-        }])
-    );
+    assert_eq!(reader(&fake).guide(MEMBER, 12).await.ok(), Some(Vec::new()));
+    assert_eq!(reader(&fake).channels(MEMBER).await.ok(), Some(Vec::new()));
+    assert_eq!(reader(&fake).tune(MEMBER, CHANNEL).await.ok(), Some(None));
+    assert!(!fake.asked_for("/LiveTv/LiveStreams/Open"));
 }
 
 #[tokio::test]
@@ -592,4 +589,105 @@ async fn a_guide_asked_outside_its_hours_or_for_a_misshapen_member_is_refused_be
         Err(Failure::Refused { .. })
     ));
     assert!(fake.requests().is_empty());
+}
+
+fn nothing_airing(account: &'static str) -> std::sync::Arc<Fake> {
+    Fake::by_route(vec![
+        (
+            Method::Post,
+            "/Users/AuthenticateByName",
+            Answer::reply(200, SIGNED_IN),
+        ),
+        (
+            Method::Get,
+            "/Users/e79d47813bc24ccd8ca0385783e0208d",
+            Answer::reply(200, account),
+        ),
+        (
+            Method::Get,
+            "/LiveTv/Channels",
+            Answer::reply(200, CHANNELS),
+        ),
+        (
+            Method::Get,
+            "/Localization/ParentalRatings",
+            Answer::reply(200, RATINGS),
+        ),
+        (
+            Method::Post,
+            "/LiveTv/Programs",
+            Answer::reply(200, r#"{"Items":[]}"#),
+        ),
+        (Method::Post, "/PlaybackInfo", Answer::reply(200, OPENED)),
+    ])
+}
+
+#[tokio::test]
+async fn with_nothing_known_on_now_a_member_held_to_a_policy_is_answered_no_channel_and_one_held_to_none_the_channel(
+) {
+    let held = nothing_airing(GUARDED);
+    assert_eq!(reader(&held).channels(MEMBER).await.ok(), Some(Vec::new()));
+    assert_eq!(reader(&held).tune(MEMBER, CHANNEL).await.ok(), Some(None));
+    assert!(!held.asked_for("/PlaybackInfo"));
+
+    let open = nothing_airing(MAY_WATCH);
+    let channels = reader(&open)
+        .channels(MEMBER)
+        .await
+        .ok()
+        .unwrap_or_default();
+    assert_eq!(channels.len(), 1);
+    assert!(channels.iter().all(|channel| channel.now.is_none()));
+}
+
+#[tokio::test]
+async fn on_a_channel_whose_programme_on_now_the_member_may_watch_a_later_programme_carrying_a_blocked_tag_is_left_out(
+) {
+    let airing = format!(
+        r#"{{"Items":[{{"Name":"Cartoons","OfficialRating":"TV-PG","ChannelId":"{CHANNEL}","Tags":["Cartoon"]}}]}}"#
+    );
+    let fake = Fake::by_route_in_turn(vec![
+        (
+            Method::Post,
+            "/Users/AuthenticateByName",
+            vec![Answer::reply(200, SIGNED_IN)],
+        ),
+        (
+            Method::Get,
+            "/Users/e79d47813bc24ccd8ca0385783e0208d",
+            vec![Answer::reply(200, GUARDED)],
+        ),
+        (
+            Method::Get,
+            "/LiveTv/Channels",
+            vec![Answer::reply(200, CHANNELS)],
+        ),
+        (
+            Method::Get,
+            "/Localization/ParentalRatings",
+            vec![Answer::reply(200, RATINGS)],
+        ),
+        (
+            Method::Post,
+            "/LiveTv/Programs",
+            vec![
+                Answer::reply(200, airing),
+                Answer::reply(200, SCHEDULED),
+                Answer::reply(200, SCHEDULED),
+            ],
+        ),
+    ]);
+    let listing = reader(&fake)
+        .guide(MEMBER, 12)
+        .await
+        .ok()
+        .and_then(|listings| listings.into_iter().next());
+    assert_eq!(
+        listing.as_ref().map(|listing| listing.until),
+        Some(instant("2026-11-13T20:30:00Z"))
+    );
+    assert!(listing.is_some_and(|listing| listing
+        .programmes
+        .iter()
+        .all(|airing| airing.title != "Fright Night")));
 }
