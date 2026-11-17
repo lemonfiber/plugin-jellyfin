@@ -106,11 +106,13 @@ fn declared() -> Declared {
                 pattern: format!("{PREFIXED}/LiveTv/LiveStreamFiles/{STREAM_SEGMENT}/stream\\."),
                 parameter: None,
                 stream: HEX.to_owned(),
+                bound: Vec::new(),
             },
             LivePath {
                 pattern: format!("{PREFIXED}/{TRANSCODED_LIVE}"),
                 parameter: Some(LIVE_STREAM_PARAMETER.to_owned()),
                 stream: LIVE_STREAM.to_owned(),
+                bound: Vec::new(),
             },
         ],
         refused: vec![
