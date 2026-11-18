@@ -16,6 +16,11 @@ in front of Jellyfin. The adapter is the Rust crate at the root, built on
 image the `Dockerfile` builds. `release.yml` publishes that image from the
 train's tag and proposes its digest to `plugin.toml`.
 
+Jellyfin's digest has one home, `plugin.toml`. `build.rs` reads the digest of the
+service the adapter fronts from it into `DIGEST`, so the pull request moving the pin
+moves what the adapter declares with it. Moving Jellyfin to another release means
+moving `RELEASE` in `src/adapter.rs` in the same change.
+
 `conformance/` holds one recording per case of each contract the adapter speaks,
 written by `lemonfiber plugin record .`, at the commit `targets.toml` names,
 against a throwaway Jellyfin at the digest `plugin.toml` pins and the adapter it

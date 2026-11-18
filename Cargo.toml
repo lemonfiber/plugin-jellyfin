@@ -27,6 +27,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["fs", "macros", "net", "rt-multi-thread", "signal", "time"] }
 
+[build-dependencies]
+toml = "1.1"
+
 [dev-dependencies]
 lemonfiber-pinned = { git = "https://github.com/lemonfiber/lemonfiber", rev = "9de49da3b6378475a2147bb388577b6370d8ad95", features = ["test-support"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json"] }
