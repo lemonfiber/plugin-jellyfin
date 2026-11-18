@@ -17,8 +17,7 @@ pub const UPSTREAM: &str = "Jellyfin";
 /// The Jellyfin release this adapter's recordings were taken from.
 pub const RELEASE: &str = "10.11.11";
 
-/// The digest of the image that release's recordings were taken from.
-pub const DIGEST: &str = "sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db";
+include!(concat!(env!("OUT_DIR"), "/fronted.rs"));
 
 /// What this adapter says it is: the contracts it speaks and the release it supports.
 #[must_use]
