@@ -14,9 +14,6 @@ use crate::jellyfin::{Happenings, Jellyfin, SERVICE};
 /// The upstream this adapter fronts, as its project names itself.
 pub const UPSTREAM: &str = "Jellyfin";
 
-/// The Jellyfin release this adapter's recordings were taken from.
-pub const RELEASE: &str = "10.11.11";
-
 include!(concat!(env!("OUT_DIR"), "/fronted.rs"));
 
 /// What this adapter says it is: the contracts it speaks and the release it supports.
