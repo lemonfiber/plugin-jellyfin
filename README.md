@@ -1,10 +1,5 @@
 # Jellyfin for lemonfiber
 
-> **No lemonfiber release installs this plugin yet.** lemonfiber 0.17.0, the
-> release `targets.toml` names, has no `speaks`, `fronts` or `native` field for a
-> plugin's service, and no `lemonfiber plugin conform`. Until it does, the
-> `manifest`, `proofs` and `reader` checks report that release's refusals.
-
 **Plays your library on TVs, phones and browsers.** This is Jellyfin as a
 first-party lemonfiber plugin: the media server the household watches on, and the
 identity source its members sign in with.
