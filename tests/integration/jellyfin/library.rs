@@ -98,6 +98,35 @@ async fn a_book_read_asks_the_library_for_books_and_audiobooks() {
 }
 
 #[tokio::test]
+async fn an_audiobook_read_asks_the_library_for_audiobooks_alone() {
+    let fake = Fake::in_turn(vec![
+        Answer::reply(200, SIGNED_IN),
+        Answer::reply(200, r#"{"Items":[{"Name":"Leviathan Wakes"}]}"#),
+    ]);
+    assert_eq!(
+        reader(&fake)
+            .has_item(TitleKind::Audiobooks, "leviathan")
+            .await
+            .ok(),
+        Some(true)
+    );
+    assert!(fake
+        .requests()
+        .get(1)
+        .is_some_and(|read| read.url.ends_with("IncludeItemTypes=AudioBook")));
+}
+
+#[tokio::test]
+async fn a_podcast_is_answered_absent_without_asking() {
+    let fake = Fake::silent();
+    assert_eq!(
+        reader(&fake).has_item(TitleKind::Podcasts, "t").await.ok(),
+        Some(false)
+    );
+    assert!(fake.requests().is_empty());
+}
+
+#[tokio::test]
 async fn a_refused_sign_in_fails_before_any_library_read() {
     let fake = Fake::in_turn(vec![Answer::reply(401, "")]);
     assert!(matches!(
